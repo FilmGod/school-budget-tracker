@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 :root {
-  --font-sarabun: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-sarabun: 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
@@ -16,24 +16,25 @@ body {
 }
 
 /* ========================================================= */
-/* Print Styles for Single Page A4 Infographic & PDF Report  */
+/* Print Styles for Guaranteed Single Page A4 Report         */
 /* ========================================================= */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 0mm !important;
+    margin: 4mm 6mm !important; /* Safe printable margins preventing extra page on mobile & desktop */
   }
 
   html, body {
-    width: 210mm !important;
-    height: 297mm !important;
-    max-height: 297mm !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background-color: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     overflow: hidden !important;
+    font-family: 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif !important;
   }
 
   .print\:hidden {
@@ -41,20 +42,23 @@ body {
   }
 
   .print-page {
-    width: 210mm !important;
-    height: 297mm !important;
-    max-height: 297mm !important;
+    width: 100% !important;
+    height: 98vh !important;
+    max-height: 285mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
     page-break-inside: avoid !important;
+    page-break-before: avoid !important;
     page-break-after: avoid !important;
+    break-inside: avoid !important;
+    break-before: avoid !important;
     break-after: avoid !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
   }
 
-  /* Force table borders to remain sharp */
   table {
     border-collapse: collapse !important;
   }
