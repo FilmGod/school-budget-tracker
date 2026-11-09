@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ActivityReport } from '@/lib/types';
-import { Printer, Download, ArrowLeft, Sparkles, FileText, Check } from 'lucide-react';
+import { Printer, Download, ArrowLeft, Sparkles, FileText, Check, Image as ImageIcon } from 'lucide-react';
 import { exportReportToDocx } from '@/lib/docxExport';
 
 interface ReportPrintViewProps {
@@ -181,10 +181,11 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
             <div className="relative z-10 px-4 flex-1 flex flex-col justify-between overflow-hidden pb-1">
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 flex-1 flex flex-col justify-between overflow-hidden">
                 
-                {/* 2-Column Content Layout */}
-                <div className="grid grid-cols-12 gap-3.5 flex-1 overflow-hidden">
+                {/* 2-Column Content Layout (Natural top-to-bottom auto layout) */}
+                <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden">
                   {/* ---------------- LEFT COLUMN (col-span-5) ---------------- */}
-                  <div className="col-span-5 flex flex-col justify-between pr-3 border-r border-slate-200 overflow-hidden">
+                  {/* Natural auto-spacing: เป้าหมาย moves up close to วัตถุประสงค์ with balanced spacing */}
+                  <div className="col-span-5 flex flex-col pr-3.5 border-r border-slate-200 overflow-hidden space-y-3.5">
                     {/* วัตถุประสงค์ */}
                     <div>
                       <div className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[16px] font-bold px-3 py-0.5 rounded-full shadow-xs mb-1.5">
@@ -200,8 +201,8 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       </div>
                     </div>
 
-                    {/* เป้าหมาย */}
-                    <div className="mt-2">
+                    {/* เป้าหมาย: อยู่ต่อเนื่องด้านล่างอย่างพอดี */}
+                    <div className="pt-0.5">
                       <div className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[16px] font-bold px-3 py-0.5 rounded-full shadow-xs mb-1.5">
                         เป้าหมาย
                       </div>
@@ -219,7 +220,8 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                   </div>
 
                   {/* ---------------- RIGHT COLUMN (col-span-7) ---------------- */}
-                  <div className="col-span-7 flex flex-col justify-between pl-1 overflow-hidden space-y-1.5">
+                  {/* Natural auto-spacing between sections */}
+                  <div className="col-span-7 flex flex-col pl-1 overflow-hidden space-y-2">
                     {/* ขอบเขตของโครงการ */}
                     <div>
                       <div className="text-[16px] font-bold text-slate-900 leading-none mb-0.5">
@@ -251,25 +253,26 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       </p>
                     </div>
 
-                    {/* ภาพกิจกรรม 3 ภาพ */}
+                    {/* ภาพกิจกรรม 3 ภาพ: ขยายให้ใหญ่ขึ้นชัดเจน มองออกว่าทำอะไร (h-28 ~ 112px) */}
                     <div>
-                      <div className="text-[15px] font-bold text-slate-900 leading-none mb-1">
-                        ภาพกิจกรรม
+                      <div className="text-[16px] font-bold text-slate-900 leading-none mb-1.5 flex items-center justify-between">
+                        <span>ภาพกิจกรรม</span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2.5">
                         {[0, 1, 2].map((idx) => {
                           const img = report.images?.[idx];
                           return (
-                            <div key={idx} className="h-16 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs">
+                            <div key={idx} className="h-28 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/90 shadow-sm relative group">
                               {img ? (
                                 <img
                                   src={img}
                                   alt={`ภาพกิจกรรม ${idx + 1}`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-[13px] text-slate-400">
-                                  ภาพที่ {idx + 1}
+                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50">
+                                  <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
+                                  <span className="text-[13px] font-medium">ภาพที่ {idx + 1}</span>
                                 </div>
                               )}
                             </div>
@@ -315,17 +318,17 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                   </div>
                 </div>
 
-                {/* Bottom Signatures Section: Seamlessly integrated at bottom of card */}
-                <div className="grid grid-cols-2 gap-3 pt-2.5 mt-2 border-t border-slate-100">
+                {/* Bottom Signatures Section: Pinned neatly at bottom of card */}
+                <div className="grid grid-cols-2 gap-3 pt-2 mt-2 border-t border-slate-100">
                   {/* Left signature capsule */}
-                  <div className="bg-sky-50/70 border border-sky-200/90 rounded-xl px-3 py-1.5 text-center text-[15px] leading-tight">
+                  <div className="bg-sky-50/70 border border-sky-200/90 rounded-xl px-3 py-1.5 text-center text-[15px] leading-tight shadow-2xs">
                     <div className="text-slate-700 whitespace-nowrap">ลงชื่อ................................................ผู้รายงาน</div>
                     <div className="font-bold text-slate-900 mt-0.5 whitespace-nowrap">( {report.reporterName || '................................................'} )</div>
                     <div className="text-slate-600 text-[14px] whitespace-nowrap">ตำแหน่ง {report.reporterPosition || 'ครู'}</div>
                   </div>
 
                   {/* Right signature capsule */}
-                  <div className="bg-amber-50/70 border border-amber-200/90 rounded-xl px-3 py-1.5 text-center text-[15px] leading-tight">
+                  <div className="bg-amber-50/70 border border-amber-200/90 rounded-xl px-3 py-1.5 text-center text-[15px] leading-tight shadow-2xs">
                     <div className="text-slate-700 whitespace-nowrap">ลงชื่อ................................................ผู้อนุมัติโครงการ</div>
                     <div className="font-bold text-slate-900 mt-0.5 whitespace-nowrap">( {report.directorName || 'นายผู้อำนวยการ เกียรติภูมิสูง'} )</div>
                     <div className="text-slate-600 text-[14px] whitespace-nowrap">ตำแหน่ง ผู้อำนวยการโรงเรียน</div>
