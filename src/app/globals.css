@@ -21,13 +21,13 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 4mm 6mm !important; /* Safe printable margins preventing extra page on mobile & desktop */
+    margin: 0mm !important;
   }
 
   html, body {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 100% !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background-color: #ffffff !important;
@@ -37,14 +37,25 @@ body {
     font-family: 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif !important;
   }
 
+  /* Force all parent containers to 0 margin/padding to prevent extra page */
+  body > div, main, #__next {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+  }
+
   .print\:hidden {
     display: none !important;
   }
 
   .print-page {
-    width: 100% !important;
-    height: 98vh !important;
-    max-height: 285mm !important;
+    width: 210mm !important;
+    height: 282mm !important; /* Safe printable height strictly on 1 page */
+    max-height: 282mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;
