@@ -54,8 +54,8 @@ body {
 
   .print-page {
     width: 210mm !important;
-    height: 282mm !important; /* Safe printable height strictly on 1 page */
-    max-height: 282mm !important;
+    height: 297mm !important; /* Exact A4 height flush to top and bottom */
+    max-height: 297mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;

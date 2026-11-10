@@ -88,17 +88,14 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
         <div className="flex justify-center print:block print:m-0 print:p-0">
           <div 
             id="print-sheet"
-            className="print-page w-[210mm] h-[282mm] max-h-[282mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
+            className="print-page w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
             style={{ 
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
             }}
           >
-            {/* Top decorative gradient curve */}
-            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-sky-400 via-sky-300 to-pink-300 pointer-events-none" />
-
-            {/* Header Area */}
-            <div className="relative z-10 px-5 pt-2 pb-1">
+            {/* Top Header Area: Flush to top edge of paper, full gradient cover */}
+            <div className="relative z-10 px-5 pt-2.5 pb-2.5 bg-gradient-to-r from-sky-400 via-sky-300 to-pink-300 shadow-xs flex-shrink-0">
               {/* Year badge */}
               <div className="flex justify-end mb-0.5">
                 <span className="bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[15px] font-bold px-3.5 py-0.5 rounded-full shadow-xs">
@@ -107,9 +104,9 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
               </div>
 
               {/* Title & Logo row */}
-              <div className="flex items-center justify-between gap-3">
-                {/* School Emblem Logo: Perfectly zoomed & fitted without white gaps */}
-                <div className="w-[84px] h-[84px] rounded-full shadow-md border-2 border-white flex-shrink-0 relative overflow-hidden bg-[#24588d] flex items-center justify-center">
+              <div className="flex items-center justify-between gap-3.5">
+                {/* School Emblem Logo: Enlarged to 96px, perfectly fitted inside the colored banner */}
+                <div className="w-[96px] h-[96px] rounded-full shadow-lg border-[3px] border-white flex-shrink-0 relative overflow-hidden bg-[#24588d] flex items-center justify-center">
                   <img
                     src="/school-logo.png"
                     alt="ตราโรงเรียนบางกล่ำวิทยารัชมังคลาภิเษก"
@@ -178,7 +175,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
             </div>
 
             {/* Main Content Area: Single cohesive card wrapping Columns & Signatures */}
-            <div className="relative z-10 px-4 flex-1 flex flex-col justify-between overflow-hidden pb-1">
+            <div className="relative z-10 px-4 my-2 flex-1 flex flex-col justify-between overflow-hidden">
               <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 flex-1 flex flex-col justify-between overflow-hidden">
                 
                 {/* 2-Column Content Layout (Natural top-to-bottom auto layout) */}
@@ -358,7 +355,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       {templateType === 'formal' && (
         <div className="flex justify-center print:block print:m-0 print:p-0">
           <div 
-            className="print-page w-[210mm] h-[282mm] max-h-[282mm] bg-white p-5 sm:p-6 shadow-lg border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 leading-snug flex flex-col justify-between overflow-hidden"
+            className="print-page w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] bg-white p-5 sm:p-6 shadow-lg border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 leading-snug flex flex-col justify-between overflow-hidden"
             style={{ 
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
