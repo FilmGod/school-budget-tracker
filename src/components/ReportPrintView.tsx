@@ -405,34 +405,34 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       )}
 
       {/* ========================================================================= */}
-      {/* 2. FORMAL GOVERNMENT A4 TEMPLATE (ฟิตพอดี 1 หน้ากระดาษ A4)                 */}
+      {/* 2. FORMAL GOVERNMENT A4 TEMPLATE (ฟิตพอดี 1 หน้ากระดาษ A4 สัดส่วนราชการ) */}
       {/* ========================================================================= */}
       {templateType === 'formal' && (
         <div className="flex justify-center print:block print:m-0 print:p-0">
           <div 
-            className="print-page w-[210mm] h-[296mm] max-h-[296mm] min-h-[296mm] bg-white p-5 sm:p-6 shadow-lg border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 leading-snug flex flex-col justify-between overflow-hidden"
+            className="print-page w-[210mm] h-[297mm] max-h-[297mm] min-h-[297mm] bg-white px-10 py-9 shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 flex flex-col justify-between overflow-hidden"
             style={{ 
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
             }}
           >
-            <div>
-              {/* Header */}
-              <div className="text-center space-y-0.5 mb-2.5 border-b border-slate-900 pb-1">
-                <h1 className="text-[22px] font-bold tracking-tight leading-none">
+            <div className="space-y-4">
+              {/* Header (Title 18pt) */}
+              <div className="text-center border-b-2 border-slate-900 pb-2">
+                <h1 className="text-[18px] font-bold tracking-tight text-slate-950 leading-snug">
                   แบบรายงานผลการดำเนินงานโครงการ / กิจกรรม
                 </h1>
-                <p className="text-[16px] font-semibold mt-0.5">
+                <p className="text-[16px] font-bold text-slate-900 mt-0.5 leading-snug">
                   {schoolName} ตามแผนปฏิบัติการประจำปีงบประมาณ {fiscalYearThai}
                 </p>
               </div>
 
-              {/* Section 1 */}
-              <div className="space-y-0.5 mb-2 text-[15px] leading-tight">
-                <h2 className="font-bold underline text-[16px]">
+              {/* ๑. ข้อมูลทั่วไปของโครงการและกิจกรรม (Header 16pt, Body 14pt) */}
+              <div className="space-y-1.5">
+                <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
                   ๑. ข้อมูลทั่วไปของโครงการและกิจกรรม
                 </h2>
-                <div className="space-y-0.5 pl-2">
+                <div className="space-y-1 pl-3 text-[14px] text-slate-900 leading-snug">
                   <div>
                     <span className="font-bold">ชื่อโครงการ: </span>
                     <span>{report.projectName || '-'}</span>
@@ -441,7 +441,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                     <span className="font-bold">ชื่อกิจกรรม: </span>
                     <span>{report.activityName || '-'}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="font-bold">แหล่งงบประมาณ: </span>
                       <span>{report.budgetSource || '-'}</span>
@@ -451,7 +451,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       <span>{(report.allocatedBudget || 0).toLocaleString()} บาท</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="font-bold">งบประมาณที่ใช้จริง: </span>
                       <span>{(report.actualUsedBudget || 0).toLocaleString()} บาท</span>
@@ -461,7 +461,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       <span>{((report.allocatedBudget || 0) - (report.actualUsedBudget || 0)).toLocaleString()} บาท</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="font-bold">ผู้รับผิดชอบโครงการ: </span>
                       <span>{report.responsiblePerson || '-'}</span>
@@ -474,14 +474,14 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 </div>
               </div>
 
-              {/* Section 2 */}
-              <div className="space-y-0.5 mb-2 text-[15px] leading-tight">
-                <h2 className="font-bold underline text-[16px]">
-                  ๒. รายละเอียดการดำเนินงานและผลการปฏิบัติงาน
+              {/* ๒. รายละเอียดการดำเนินงานและผลลัพธ์ (Header 16pt, Body 14pt) */}
+              <div className="space-y-1.5">
+                <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
+                  ๒. รายละเอียดการดำเนินงานและผลลัพธ์
                 </h2>
-                <div className="space-y-0.5 pl-2">
+                <div className="space-y-1 pl-3 text-[14px] text-slate-900 leading-snug">
                   <div>
-                    <span className="font-bold">วัตถุประสงค์ของโครงการ: </span>
+                    <span className="font-bold">วัตถุประสงค์โครงการ: </span>
                     <span>{(report.objectives || []).join(' | ')}</span>
                   </div>
                   <div>
@@ -503,29 +503,29 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 </div>
               </div>
 
-              {/* Section 3 */}
-              <div className="space-y-0.5 mb-2 text-[15px] leading-tight">
-                <h2 className="font-bold underline text-[16px]">
+              {/* ๓. สรุปผลการประเมินตามวัตถุประสงค์ (Header 16pt, Table 14pt) */}
+              <div className="space-y-1.5">
+                <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
                   ๓. สรุปผลการประเมินตามวัตถุประสงค์
                 </h2>
-                <table className="w-full text-[14px] border-collapse border border-slate-900">
+                <table className="w-full text-[14px] border-collapse border border-slate-900 text-slate-900">
                   <thead>
                     <tr className="bg-slate-100 font-bold">
-                      <th className="border border-slate-900 py-0.5 px-2 text-center w-10">ที่</th>
-                      <th className="border border-slate-900 py-0.5 px-2 text-center">วัตถุประสงค์</th>
-                      <th className="border border-slate-900 py-0.5 px-2 text-center w-20">บรรลุ</th>
-                      <th className="border border-slate-900 py-0.5 px-2 text-center w-20">ไม่บรรลุ</th>
+                      <th className="border border-slate-900 py-1 px-2 text-center w-12">ที่</th>
+                      <th className="border border-slate-900 py-1 px-2.5 text-center">วัตถุประสงค์</th>
+                      <th className="border border-slate-900 py-1 px-2 text-center w-24">บรรลุ</th>
+                      <th className="border border-slate-900 py-1 px-2 text-center w-24">ไม่บรรลุ</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(report.evaluations || []).map((ev, i) => (
                       <tr key={i}>
-                        <td className="border border-slate-900 py-0.5 px-2 text-center font-medium">{i + 1}</td>
-                        <td className="border border-slate-900 py-0.5 px-2">{ev.objective}</td>
-                        <td className="border border-slate-900 py-0.5 px-2 text-center font-bold text-emerald-800">
+                        <td className="border border-slate-900 py-1 px-2 text-center font-bold">{i + 1}</td>
+                        <td className="border border-slate-900 py-1 px-2.5">{ev.objective}</td>
+                        <td className="border border-slate-900 py-1 px-2 text-center font-bold text-emerald-800">
                           {ev.isAchieved ? '✓' : ''}
                         </td>
-                        <td className="border border-slate-900 py-0.5 px-2 text-center font-bold text-rose-800">
+                        <td className="border border-slate-900 py-1 px-2 text-center font-bold text-rose-800">
                           {!ev.isAchieved ? '✓' : ''}
                         </td>
                       </tr>
@@ -534,39 +534,60 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 </table>
               </div>
 
-              {/* Section 4 */}
-              <div className="space-y-0.5 mb-2 text-[15px] leading-tight">
-                <h2 className="font-bold underline text-[16px]">
-                  ๔. ภาพถ่ายการจัดกิจกรรม (๓ ภาพ)
+              {/* ๔. ภาพถ่ายกิจกรรม (๓ ภาพ) (Header 16pt, Captions 14pt, Images h-32 ไม่แบน) */}
+              <div className="space-y-1.5">
+                <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
+                  ๔. ภาพถ่ายกิจกรรม (๓ ภาพ)
                 </h2>
-                <div className="grid grid-cols-3 gap-2 pt-0.5">
-                  {(report.images || []).slice(0, 3).map((img, i) => (
-                    <div key={i} className="text-center space-y-0.5">
-                      <div className="h-14 bg-slate-100 border border-slate-300 rounded overflow-hidden flex items-center justify-center">
-                        <img src={img} alt={`ภาพกิจกรรม ${i + 1}`} className="w-full h-full object-cover" />
+                <div className="grid grid-cols-3 gap-3 pt-1">
+                  {[0, 1, 2].map((idx) => {
+                    const img = report.images?.[idx];
+                    return (
+                      <div key={idx} className="text-center space-y-1">
+                        <div className="h-32 bg-slate-100 border border-slate-400 rounded overflow-hidden flex items-center justify-center shadow-2xs">
+                          {img ? (
+                            <img
+                              src={img}
+                              alt={`ภาพกิจกรรม ${idx + 1}`}
+                              className="w-full h-full object-cover object-center"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-[13px]">
+                              <span>ไม่มีภาพ</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[13px] text-slate-800 font-medium leading-snug line-clamp-1">
+                          ภาพที่ {idx + 1}: ภาพการดำเนินกิจกรรม {report.activityName || 'กิจกรรมพัฒนาคุณภาพผู้เรียน'}
+                        </p>
                       </div>
-                      <p className="text-[12px] text-slate-600 font-medium">ภาพที่ {i + 1}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
-            {/* Section 5: Signatures side-by-side strictly on same page */}
-            <div className="pt-2 border-t border-slate-300 text-[15px] leading-tight">
-              <div className="grid grid-cols-2 gap-4">
+            {/* ส่วนลงชื่อราชการ strictly on same page */}
+            <div className="pt-4 border-t border-slate-400 text-[14px] leading-relaxed">
+              <div className="text-center mb-3">
+                <p className="text-[14px] font-semibold text-slate-800">
+                  ขอรับรองว่ารายงานดังกล่าวเป็นความจริงทุกประการ
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
                 {/* Left: ผู้รายงาน */}
                 <div className="text-center space-y-0.5">
-                  <div className="whitespace-nowrap">ลงชื่อ................................................ผู้รายงาน</div>
-                  <div className="font-bold whitespace-nowrap">( {report.reporterName || '................................................'} )</div>
-                  <div className="text-slate-600 text-[14px] whitespace-nowrap">ตำแหน่ง {report.reporterPosition || 'ครู'}</div>
+                  <div className="whitespace-nowrap">ลงชื่อ........................................................ผู้รายงาน</div>
+                  <div className="font-bold whitespace-nowrap">( {report.reporterName || '........................................................'} )</div>
+                  <div className="text-slate-700 whitespace-nowrap">ตำแหน่ง {report.reporterPosition || 'ครู'}</div>
                 </div>
 
                 {/* Right: ผู้อำนวยการโรงเรียน */}
                 <div className="text-center space-y-0.5">
-                  <div className="whitespace-nowrap">ลงชื่อ................................................ผู้อนุมัติโครงการ</div>
-                  <div className="font-bold whitespace-nowrap">( {report.directorName || '................................................'} )</div>
-                  <div className="text-slate-600 text-[14px] whitespace-nowrap">ผู้อำนวยการ{schoolName}</div>
+                  <div className="whitespace-nowrap">ลงชื่อ........................................................ผู้อำนวยการโรงเรียน</div>
+                  <div className="font-bold whitespace-nowrap">( {report.directorName || 'นายผู้อำนวยการ เกียรติภูมิสูง'} )</div>
+                  <div className="text-slate-700 whitespace-nowrap">ตำแหน่ง ผู้อำนวยการโรงเรียน</div>
                 </div>
               </div>
             </div>
