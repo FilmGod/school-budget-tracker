@@ -88,7 +88,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
         <div className="flex justify-center print:block print:m-0 print:p-0">
           <div 
             id="print-sheet"
-            className="print-page w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
+            className="print-page w-[210mm] h-[285mm] max-h-[285mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
             style={{ 
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
@@ -355,7 +355,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       {templateType === 'formal' && (
         <div className="flex justify-center print:block print:m-0 print:p-0">
           <div 
-            className="print-page w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] bg-white p-5 sm:p-6 shadow-lg border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 leading-snug flex flex-col justify-between overflow-hidden"
+            className="print-page w-[210mm] h-[285mm] max-h-[285mm] bg-white p-5 sm:p-6 shadow-lg border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 leading-snug flex flex-col justify-between overflow-hidden"
             style={{ 
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
