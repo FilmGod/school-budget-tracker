@@ -107,6 +107,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, data: db.reports });
       }
 
+      case 'DELETE_REPORT': {
+        db.reports = db.reports.filter(r => r.id !== payload.id);
+        saveDB(db);
+        return NextResponse.json({ success: true, data: db.reports });
+      }
+
       case 'SAVE_DOCUMENT': {
         const index = db.documents.findIndex(d => d.id === payload.id);
         if (index >= 0) {

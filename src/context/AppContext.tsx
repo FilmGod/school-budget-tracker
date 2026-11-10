@@ -21,6 +21,7 @@ interface AppContextType {
   addProject: (project: Project) => Promise<void>;
   recordExpense: (activityId: string, expense: ExpenseItem) => Promise<void>;
   saveReport: (report: ActivityReport) => Promise<void>;
+  deleteReport: (id: string) => Promise<void>;
   saveDocument: (doc: ProjectDocument) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
   resetDatabase: () => Promise<void>;
@@ -160,6 +161,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteReport = async (id: string) => {
+    try {
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_REPORT', payload: { id } })
+      });
+      if (res.ok) await fetchData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const saveDocument = async (doc: ProjectDocument) => {
     try {
       const res = await fetch('/api/data', {
@@ -223,6 +237,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addProject,
         recordExpense,
         saveReport,
+        deleteReport,
         saveDocument,
         deleteDocument,
         resetDatabase,
