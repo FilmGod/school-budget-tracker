@@ -105,29 +105,29 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
             <span>ดาวน์โหลดเป็น Word (.docx)</span>
           </button>
           <button
-            onClick={handleDirectPdfDownload}
-            disabled={isExportingPdf}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md transition-all disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            <span>{isExportingPdf ? 'กำลังสร้างไฟล์ PDF...' : 'ดาวน์โหลด PDF ตรง (1 หน้าจบ เป๊ะ 100%)'}</span>
-          </button>
-          <button
             onClick={handlePrint}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-xs transition-all"
-            title="หากต้องการพิมพ์ ให้เลือก ขอบกระดาษ เป็น 'ไม่มี' (Margins: None)"
+            className="inline-flex items-center space-x-2 px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md hover:shadow-lg transition-all"
           >
             <Printer className="w-4 h-4" />
-            <span>สั่งพิมพ์ / Print Dialog</span>
+            <span>พิมพ์รายงาน / บันทึกเป็น PDF (1 หน้าจบ สวยงาม 100%)</span>
           </button>
         </div>
       </div>
 
-      {/* Helpful Tip */}
-      <div className="max-w-4xl mx-auto mb-4 px-4 py-2 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center justify-between print:hidden">
-        <div className="flex items-center space-x-2">
-          <span className="font-bold">💡 แนะนำ:</span>
-          <span>กดปุ่มสีแดง <b>"ดาวน์โหลด PDF ตรง"</b> จะได้ไฟล์ขนาด A4 ชิดขอบบน-ล่างพอดี 1 หน้าเป๊ะทันทีโดยไม่ต้องตั้งค่าใดๆ (หากต้องการสั่งพิมพ์ผ่านเบราว์เซอร์ ให้เลือก ขอบกระดาษ เป็น "ไม่มี" / Margins: None)</span>
+      {/* Guidance Banner */}
+      <div className="max-w-4xl mx-auto mb-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl text-xs text-amber-950 shadow-xs print:hidden">
+        <div className="flex items-start space-x-2.5">
+          <span className="text-base">📌</span>
+          <div className="space-y-1">
+            <div className="font-bold text-[13px] text-amber-950">คำแนะนำการบันทึก PDF ให้ได้ไฟล์คมชัด 1 หน้าจบพอดีเป๊ะ:</div>
+            <div className="text-slate-700 leading-relaxed">
+              เมื่อกดปุ่มสีแดง <b>"พิมพ์รายงาน / บันทึกเป็น PDF"</b> หน้าต่างของระบบจะเปิดขึ้นมา ให้ตรวจสอบ 2 จุดนี้:
+              <ul className="list-disc pl-4 mt-1 space-y-0.5 font-medium">
+                <li>ปลายทาง (Destination): เลือก <b>"บันทึกเป็น PDF" (Save as PDF)</b></li>
+                <li>ขอบกระดาษ (Margins): เลือก <b>"ไม่มี" (None)</b> เพื่อให้แถบสีชิดขอบกระดาษบน-ล่างพอดี 1 หน้าเป๊ะ (ไม่มีหน้าที่ 2)</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -197,28 +197,27 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
 
                 {/* QR Code */}
                 <div className="flex-shrink-0 text-center pl-1">
-                  <div className="border border-pink-400 bg-white rounded-xl p-1 shadow-xs inline-block">
-                    <div className="text-[10px] font-extrabold text-pink-600 tracking-wider mb-0.5 uppercase">SCAN ME</div>
-                    <div className="w-11 h-11 bg-slate-900 p-0.5 rounded flex items-center justify-center">
-                      <div className="w-full h-full grid grid-cols-4 gap-0.5 bg-slate-900">
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-slate-900"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-slate-900"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-slate-900"></div>
-                        <div className="bg-slate-900"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-slate-900"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                        <div className="bg-white rounded-[1px]"></div>
-                      </div>
-                    </div>
+                  <div className="border border-pink-400 bg-white rounded-xl p-1.5 shadow-xs inline-block">
+                    <div className="text-[10px] font-extrabold text-pink-600 tracking-wider mb-1 uppercase">SCAN ME</div>
+                    <svg className="w-11 h-11" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="33" height="33" rx="3" fill="#0f172a"/>
+                      <rect x="3" y="3" width="9" height="9" fill="white" rx="1"/>
+                      <rect x="5" y="5" width="5" height="5" fill="#0f172a"/>
+                      <rect x="6.5" y="6.5" width="2" height="2" fill="white"/>
+                      <rect x="21" y="3" width="9" height="9" fill="white" rx="1"/>
+                      <rect x="23" y="5" width="5" height="5" fill="#0f172a"/>
+                      <rect x="24.5" y="6.5" width="2" height="2" fill="white"/>
+                      <rect x="3" y="21" width="9" height="9" fill="white" rx="1"/>
+                      <rect x="5" y="23" width="5" height="5" fill="#0f172a"/>
+                      <rect x="6.5" y="24.5" width="2" height="2" fill="white"/>
+                      <rect x="15" y="4" width="3" height="6" fill="white"/>
+                      <rect x="15" y="14" width="6" height="3" fill="white"/>
+                      <rect x="14" y="21" width="4" height="4" fill="white"/>
+                      <rect x="22" y="16" width="3" height="4" fill="white"/>
+                      <rect x="26" y="22" width="4" height="3" fill="white"/>
+                      <rect x="20" y="25" width="3" height="5" fill="white"/>
+                      <rect x="26" y="27" width="4" height="3" fill="white"/>
+                    </svg>
                   </div>
                 </div>
               </div>
