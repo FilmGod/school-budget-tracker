@@ -2,136 +2,166 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import initialData from '@/data/initialData.json';
-import { DatabaseSchema } from '@/lib/types';
+import { DatabaseSchema, Activity, ActivityReport, FiscalYear, Project, ProjectDocument } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
 
-const dataFilePath = path.join(process.cwd(), 'src', 'data', 'db.json');
+export const dynamic = 'force-dynamic';
 
-function getDB(): DatabaseSchema {
+const localDbPath = path.join(process.cwd(), 'src', 'data', 'db.json');
+
+function getLocalDB(): DatabaseSchema {
   try {
-    if (!fs.existsSync(dataFilePath)) {
-      fs.writeFileSync(dataFilePath, JSON.stringify(initialData, null, 2), 'utf-8');
-      return initialData as DatabaseSchema;
+    if (fs.existsSync(localDbPath)) {
+      return JSON.parse(fs.readFileSync(localDbPath, 'utf-8'));
     }
-    const raw = fs.readFileSync(dataFilePath, 'utf-8');
-    return JSON.parse(raw);
-  } catch (error) {
-    console.error('Error reading db.json:', error);
-    return initialData as DatabaseSchema;
+  } catch (e) {
+    // Ignore in read-only / serverless environment
   }
+  return initialData as DatabaseSchema;
 }
 
-function saveDB(data: DatabaseSchema): boolean {
+function saveLocalDB(data: DatabaseSchema) {
   try {
-    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2), 'utf-8');
-    return true;
-  } catch (error) {
-    console.error('Error writing to db.json:', error);
-    return false;
+    fs.writeFileSync(localDbPath, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    // Expected in Vercel serverless environment
   }
 }
 
 export async function GET() {
-  const db = getDB();
-  return NextResponse.json(db);
+  try {
+    const [fyRes, deptRes, projRes, actRes, repRes, docRes] = await Promise.all([
+      supabase.from('fiscal_years').select('data').order('id'),
+      supabase.from('departments').select('data'),
+      supabase.from('projects').select('data'),
+      supabase.from('activities').select('data'),
+      supabase.from('reports').select('data'),
+      supabase.from('documents').select('data')
+    ]);
+
+    // If Supabase returned data, format it
+    if (actRes.data && actRes.data.length > 0) {
+      const db: DatabaseSchema = {
+        fiscalYears: (fyRes.data || []).map((r: any) => r.data as FiscalYear),
+        departments: (deptRes.data || []).map((r: any) => r.data),
+        projects: (projRes.data || []).map((r: any) => r.data as Project),
+        activities: (actRes.data || []).map((r: any) => r.data as Activity),
+        reports: (repRes.data || []).map((r: any) => r.data as ActivityReport),
+        documents: (docRes.data || []).map((r: any) => r.data as ProjectDocument)
+      };
+
+      // Also keep departments if empty
+      if (db.departments.length === 0) {
+        db.departments = initialData.departments as any;
+      }
+      return NextResponse.json(db);
+    }
+  } catch (err) {
+    console.error('Error querying Supabase in GET /api/data:', err);
+  }
+
+  // Fallback to local
+  return NextResponse.json(getLocalDB());
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action, payload } = body;
-    const db = getDB();
 
     switch (action) {
       case 'SET_FULL_DB': {
-        saveDB(payload);
+        saveLocalDB(payload);
         return NextResponse.json({ success: true, data: payload });
       }
 
       case 'ADD_FISCAL_YEAR': {
-        const exists = db.fiscalYears.some(f => f.id === payload.id);
-        if (!exists) {
-          db.fiscalYears.push(payload);
-          saveDB(db);
-        }
-        return NextResponse.json({ success: true, data: db.fiscalYears });
+        await supabase.from('fiscal_years').upsert({ id: payload.id, data: payload });
+        return NextResponse.json({ success: true, data: payload });
       }
 
       case 'SAVE_ACTIVITY': {
-        const index = db.activities.findIndex(a => a.id === payload.id);
-        if (index >= 0) {
-          db.activities[index] = { ...db.activities[index], ...payload };
-        } else {
-          db.activities.push(payload);
-        }
-        saveDB(db);
-        return NextResponse.json({ success: true, data: db.activities });
+        await supabase.from('activities').upsert({ id: payload.id, data: payload });
+        return NextResponse.json({ success: true, data: payload });
       }
 
       case 'DELETE_ACTIVITY': {
-        db.activities = db.activities.filter(a => a.id !== payload.id);
-        saveDB(db);
-        return NextResponse.json({ success: true, data: db.activities });
+        await supabase.from('activities').delete().eq('id', payload.id);
+        return NextResponse.json({ success: true, data: { id: payload.id } });
       }
 
       case 'ADD_PROJECT': {
-        const exists = db.projects.some(p => p.id === payload.id);
-        if (!exists) {
-          db.projects.push(payload);
-          saveDB(db);
-        }
-        return NextResponse.json({ success: true, data: db.projects });
+        await supabase.from('projects').upsert({ id: payload.id, data: payload });
+        return NextResponse.json({ success: true, data: payload });
       }
 
       case 'RECORD_EXPENSE': {
         const { activityId, expense } = payload;
-        const act = db.activities.find(a => a.id === activityId);
+        // Fetch current activity from Supabase
+        const { data: actRow } = await supabase.from('activities').select('data').eq('id', activityId).single();
+        let act: Activity | null = actRow ? actRow.data : null;
+
         if (act) {
           if (!act.expenses) act.expenses = [];
           act.expenses.push(expense);
           act.usedAmount = act.expenses.reduce((sum, e) => sum + (e.amount || 0) - (e.refund || 0), 0);
           act.remainingAmount = act.allocatedAmount - act.usedAmount;
           act.status = act.remainingAmount <= 0 ? 'completed' : 'in_progress';
-          saveDB(db);
+
+          await supabase.from('activities').upsert({ id: act.id, data: act });
+          return NextResponse.json({ success: true, data: act });
         }
-        return NextResponse.json({ success: true, data: act });
+        return NextResponse.json({ error: 'Activity not found' }, { status: 404 });
       }
 
       case 'SAVE_REPORT': {
-        const index = db.reports.findIndex(r => r.id === payload.id);
-        if (index >= 0) {
-          db.reports[index] = { ...db.reports[index], ...payload };
-        } else {
-          db.reports.push(payload);
+        const { error } = await supabase.from('reports').upsert({ id: payload.id, data: payload });
+        if (error) {
+          console.error('Supabase SAVE_REPORT error:', error);
+          return NextResponse.json({ error: error.message }, { status: 500 });
         }
-        saveDB(db);
-        return NextResponse.json({ success: true, data: db.reports });
+        return NextResponse.json({ success: true, data: payload });
       }
 
       case 'DELETE_REPORT': {
-        db.reports = db.reports.filter(r => r.id !== payload.id);
-        saveDB(db);
-        return NextResponse.json({ success: true, data: db.reports });
+        const { error } = await supabase.from('reports').delete().eq('id', payload.id);
+        if (error) {
+          console.error('Supabase DELETE_REPORT error:', error);
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        return NextResponse.json({ success: true, data: { id: payload.id } });
       }
 
       case 'SAVE_DOCUMENT': {
-        const index = db.documents.findIndex(d => d.id === payload.id);
-        if (index >= 0) {
-          db.documents[index] = { ...db.documents[index], ...payload };
-        } else {
-          db.documents.push(payload);
-        }
-        saveDB(db);
-        return NextResponse.json({ success: true, data: db.documents });
+        await supabase.from('documents').upsert({ id: payload.id, data: payload });
+        return NextResponse.json({ success: true, data: payload });
       }
 
       case 'DELETE_DOCUMENT': {
-        db.documents = db.documents.filter(d => d.id !== payload.id);
-        saveDB(db);
-        return NextResponse.json({ success: true, data: db.documents });
+        await supabase.from('documents').delete().eq('id', payload.id);
+        return NextResponse.json({ success: true, data: { id: payload.id } });
       }
 
       case 'RESET_DB': {
-        saveDB(initialData as DatabaseSchema);
+        // Re-seed all initial data to Supabase
+        for (const fy of initialData.fiscalYears || []) {
+          await supabase.from('fiscal_years').upsert({ id: fy.id, data: fy });
+        }
+        for (const d of initialData.departments || []) {
+          await supabase.from('departments').upsert({ id: d.id, data: d });
+        }
+        for (const p of initialData.projects || []) {
+          await supabase.from('projects').upsert({ id: p.id, data: p });
+        }
+        for (const a of initialData.activities || []) {
+          await supabase.from('activities').upsert({ id: a.id, data: a });
+        }
+        for (const r of initialData.reports || []) {
+          await supabase.from('reports').upsert({ id: r.id, data: r });
+        }
+        for (const doc of initialData.documents || []) {
+          await supabase.from('documents').upsert({ id: doc.id, data: doc });
+        }
         return NextResponse.json({ success: true, data: initialData });
       }
 
