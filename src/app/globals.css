@@ -43,8 +43,8 @@ body {
     padding: 0 !important;
     max-width: none !important;
     width: 210mm !important;
-    height: 285mm !important;
-    max-height: 285mm !important;
+    height: 296mm !important;
+    max-height: 296mm !important;
     overflow: hidden !important;
   }
 
@@ -54,8 +54,9 @@ body {
 
   .print-page {
     width: 210mm !important;
-    height: 285mm !important; /* Safe printable height strictly on 1 page without 1px spill */
-    max-height: 285mm !important;
+    height: 296mm !important; /* Strict 1-page A4 height (296mm prevents 1px rounding spillover) */
+    max-height: 296mm !important;
+    min-height: 296mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;

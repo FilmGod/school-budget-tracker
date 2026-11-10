@@ -12,6 +12,7 @@ interface ReportPrintViewProps {
 
 export default function ReportPrintView({ report, onBack }: ReportPrintViewProps) {
   const [templateType, setTemplateType] = useState<'infographic' | 'formal'>('infographic');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -19,6 +20,35 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
 
   const handleDocxExport = async () => {
     await exportReportToDocx(report);
+  };
+
+  const handleDirectPdfDownload = async () => {
+    setIsExportingPdf(true);
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const element = document.getElementById('print-sheet');
+      if (!element) return;
+      const opt = {
+        margin: 0,
+        filename: `รายงาน_${report.activityName || 'กิจกรรม'}_ปี${report.fiscalYear || '2570'}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          logging: false,
+          scrollY: 0,
+          scrollX: 0
+        },
+        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
+        pagebreak: { mode: 'avoid-all' as const }
+      };
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error('Direct PDF export error, falling back to print dialog:', err);
+      window.print();
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const schoolName = 'โรงเรียนบางกล่ำวิทยารัชมังคลาภิเษก';
@@ -63,21 +93,38 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
           </button>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleDocxExport}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-all"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-all"
           >
             <Download className="w-4 h-4" />
             <span>ดาวน์โหลดเป็น Word (.docx)</span>
           </button>
           <button
+            onClick={handleDirectPdfDownload}
+            disabled={isExportingPdf}
+            className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md transition-all disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            <span>{isExportingPdf ? 'กำลังสร้างไฟล์ PDF...' : 'ดาวน์โหลด PDF ตรง (1 หน้าจบ เป๊ะ 100%)'}</span>
+          </button>
+          <button
             onClick={handlePrint}
-            className="inline-flex items-center space-x-1.5 px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-sm transition-all"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-xs transition-all"
+            title="หากต้องการพิมพ์ ให้เลือก ขอบกระดาษ เป็น 'ไม่มี' (Margins: None)"
           >
             <Printer className="w-4 h-4" />
-            <span>พิมพ์รายงาน / บันทึก PDF (1 หน้าจบ)</span>
+            <span>สั่งพิมพ์ / Print Dialog</span>
           </button>
+        </div>
+      </div>
+
+      {/* Helpful Tip */}
+      <div className="max-w-4xl mx-auto mb-4 px-4 py-2 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center justify-between print:hidden">
+        <div className="flex items-center space-x-2">
+          <span className="font-bold">💡 แนะนำ:</span>
+          <span>กดปุ่มสีแดง <b>"ดาวน์โหลด PDF ตรง"</b> จะได้ไฟล์ขนาด A4 ชิดขอบบน-ล่างพอดี 1 หน้าเป๊ะทันทีโดยไม่ต้องตั้งค่าใดๆ (หากต้องการสั่งพิมพ์ผ่านเบราว์เซอร์ ให้เลือก ขอบกระดาษ เป็น "ไม่มี" / Margins: None)</span>
         </div>
       </div>
 
@@ -88,7 +135,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
         <div className="flex justify-center print:block print:m-0 print:p-0">
           <div 
             id="print-sheet"
-            className="print-page w-[210mm] h-[285mm] max-h-[285mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
+            className="print-page w-[210mm] h-[296mm] max-h-[296mm] min-h-[296mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
             style={{ 
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
@@ -182,9 +229,9 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden">
                   {/* ---------------- LEFT COLUMN (col-span-5) ---------------- */}
                   {/* Natural auto-spacing: เป้าหมาย moves up close to วัตถุประสงค์ with balanced spacing */}
-                  <div className="col-span-5 flex flex-col pr-3.5 border-r border-slate-200 overflow-hidden space-y-3.5">
+                  <div className="col-span-5 flex flex-col pr-3.5 border-r border-slate-200 overflow-hidden space-y-3">
                     {/* วัตถุประสงค์ */}
-                    <div>
+                    <div className="bg-amber-50/40 border border-amber-200/80 rounded-xl p-3 shadow-2xs">
                       <div className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[16px] font-bold px-3 py-0.5 rounded-full shadow-xs mb-1.5">
                         วัตถุประสงค์
                       </div>
@@ -199,18 +246,24 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                     </div>
 
                     {/* เป้าหมาย: อยู่ต่อเนื่องด้านล่างอย่างพอดี */}
-                    <div className="pt-0.5">
+                    <div className="bg-amber-50/40 border border-amber-200/80 rounded-xl p-3 shadow-2xs">
                       <div className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[16px] font-bold px-3 py-0.5 rounded-full shadow-xs mb-1.5">
                         เป้าหมาย
                       </div>
-                      <div className="space-y-2 pl-1 text-[16px] leading-snug">
+                      <div className="space-y-2.5 pl-1 text-[16px] leading-snug">
                         <div>
-                          <div className="font-bold text-amber-900">เชิงปริมาณ</div>
-                          <p className="text-slate-800 pl-1">{report.quantitativeTarget || '-'}</p>
+                          <div className="font-bold text-amber-900 flex items-center gap-1">
+                            <span>•</span>
+                            <span>เชิงปริมาณ</span>
+                          </div>
+                          <p className="text-slate-800 pl-3">{report.quantitativeTarget || '-'}</p>
                         </div>
                         <div>
-                          <div className="font-bold text-amber-900">เชิงคุณภาพ</div>
-                          <p className="text-slate-800 pl-1">{report.qualitativeTarget || '-'}</p>
+                          <div className="font-bold text-amber-900 flex items-center gap-1">
+                            <span>•</span>
+                            <span>เชิงคุณภาพ</span>
+                          </div>
+                          <p className="text-slate-800 pl-3">{report.qualitativeTarget || '-'}</p>
                         </div>
                       </div>
                     </div>
@@ -250,7 +303,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       </p>
                     </div>
 
-                    {/* ภาพกิจกรรม 3 ภาพ: ขยายให้ใหญ่ขึ้นชัดเจน มองออกว่าทำอะไร (h-28 ~ 112px) */}
+                    {/* ภาพกิจกรรม 3 ภาพ: ขยายให้ใหญ่ขึ้นชัดเจน มองออกว่าทำอะไร (h-36 ~ 144px) */}
                     <div>
                       <div className="text-[16px] font-bold text-slate-900 leading-none mb-1.5 flex items-center justify-between">
                         <span>ภาพกิจกรรม</span>
@@ -259,7 +312,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                         {[0, 1, 2].map((idx) => {
                           const img = report.images?.[idx];
                           return (
-                            <div key={idx} className="h-28 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/90 shadow-sm relative group">
+                            <div key={idx} className="h-36 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/90 shadow-sm relative group">
                               {img ? (
                                 <img
                                   src={img}
@@ -268,8 +321,8 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                                 />
                               ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50">
-                                  <ImageIcon className="w-6 h-6 mb-1 opacity-50" />
-                                  <span className="text-[13px] font-medium">ภาพที่ {idx + 1}</span>
+                                  <ImageIcon className="w-7 h-7 mb-1 opacity-50" />
+                                  <span className="text-[14px] font-medium">ภาพที่ {idx + 1}</span>
                                 </div>
                               )}
                             </div>
@@ -336,13 +389,13 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
             </div>
 
             {/* Bottom Footer Ribbon Strip */}
-            <div className="relative z-10 bg-gradient-to-r from-red-800 via-rose-800 to-red-900 text-white py-1 px-5 flex items-center justify-between text-[13px] font-bold tracking-tight shadow-md flex-shrink-0">
+            <div className="relative z-10 bg-gradient-to-r from-red-800 via-rose-800 to-red-900 text-white py-2 px-5 flex items-center justify-between text-[13.5px] font-bold tracking-tight shadow-md flex-shrink-0">
               <div className="flex items-center space-x-2">
-                <span className="tracking-widest opacity-80">:::::</span>
+                <span className="tracking-widest opacity-85">:::::</span>
                 <span>{schoolName}</span>
-                <span className="opacity-80 font-normal">| {areaOffice}</span>
+                <span className="opacity-85 font-normal">| {areaOffice}</span>
               </div>
-              <span className="text-[12px] font-normal opacity-85">ระบบติดตามแผนปฏิบัติการงบประมาณ</span>
+              <span className="text-[12px] font-normal opacity-90">ระบบติดตามแผนปฏิบัติการงบประมาณ</span>
             </div>
 
           </div>
@@ -355,7 +408,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       {templateType === 'formal' && (
         <div className="flex justify-center print:block print:m-0 print:p-0">
           <div 
-            className="print-page w-[210mm] h-[285mm] max-h-[285mm] bg-white p-5 sm:p-6 shadow-lg border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 leading-snug flex flex-col justify-between overflow-hidden"
+            className="print-page w-[210mm] h-[296mm] max-h-[296mm] min-h-[296mm] bg-white p-5 sm:p-6 shadow-lg border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 leading-snug flex flex-col justify-between overflow-hidden"
             style={{ 
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
