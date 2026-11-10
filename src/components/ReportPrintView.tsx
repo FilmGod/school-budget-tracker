@@ -391,13 +391,12 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
             </div>
 
             {/* Bottom Footer Ribbon Strip */}
-            <div className="relative z-10 bg-gradient-to-r from-red-800 via-rose-800 to-red-900 text-white py-2 px-5 flex items-center justify-between text-[13.5px] font-bold tracking-tight shadow-md flex-shrink-0">
-              <div className="flex items-center space-x-2">
+            <div className="relative z-10 bg-gradient-to-r from-red-800 via-rose-800 to-red-900 text-white py-2 px-5 flex items-center justify-center text-[14px] font-bold tracking-tight shadow-md flex-shrink-0">
+              <div className="flex items-center space-x-2 text-center">
                 <span className="tracking-widest opacity-85">:::::</span>
                 <span>{schoolName}</span>
                 <span className="opacity-85 font-normal">| {areaOffice}</span>
               </div>
-              <span className="text-[12px] font-normal opacity-90">ระบบติดตามแผนปฏิบัติการงบประมาณ</span>
             </div>
 
           </div>
