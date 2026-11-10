@@ -25,6 +25,9 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
   const handleDirectPdfDownload = async () => {
     setIsExportingPdf(true);
     try {
+      if (typeof document !== 'undefined' && document.fonts) {
+        await document.fonts.ready;
+      }
       const html2pdf = (await import('html2pdf.js')).default;
       const element = document.getElementById('print-sheet');
       if (!element) return;
@@ -142,16 +145,16 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
             }}
           >
             {/* Top Header Area: Flush to top edge of paper, full gradient cover */}
-            <div className="relative z-10 px-5 pt-2.5 pb-2.5 bg-gradient-to-r from-sky-400 via-sky-300 to-pink-300 shadow-xs flex-shrink-0">
+            <div className="relative z-10 px-5 pt-3 pb-3 bg-gradient-to-r from-sky-400 via-sky-300 to-pink-300 shadow-xs flex-shrink-0">
               {/* Year badge */}
-              <div className="flex justify-end mb-0.5">
-                <span className="bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[15px] font-bold px-3.5 py-0.5 rounded-full shadow-xs">
+              <div className="flex justify-end mb-1">
+                <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-rose-600 text-white text-[14px] font-bold shadow-xs leading-none">
                   ปีงบประมาณ พ.ศ.{fiscalYearThai}
                 </span>
               </div>
 
               {/* Title & Logo row */}
-              <div className="flex items-center justify-between gap-3.5">
+              <div className="flex items-center justify-between gap-4">
                 {/* School Emblem Logo: Enlarged to 96px, perfectly fitted inside the colored banner */}
                 <div className="w-[96px] h-[96px] rounded-full shadow-lg border-[3px] border-white flex-shrink-0 relative overflow-hidden bg-[#24588d] flex items-center justify-center">
                   <img
@@ -163,23 +166,23 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
 
                 {/* Main titles */}
                 <div className="flex-1 pl-1">
-                  <h1 className="text-[26px] font-black text-rose-600 tracking-tight leading-none drop-shadow-xs">
+                  <h1 className="text-[25px] font-black text-rose-600 tracking-tight leading-snug drop-shadow-xs mb-0.5">
                     รายงานผลการดำเนินงาน
                   </h1>
-                  <h2 className="text-[18px] font-extrabold text-sky-950 line-clamp-1 leading-tight mt-1">
+                  <h2 className="text-[17px] font-extrabold text-sky-950 leading-snug mb-1.5 truncate">
                     {report.projectName || 'โครงการตามแผนปฏิบัติการประจำปี'}
                   </h2>
 
                   {/* Activity Pill */}
-                  <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[16px] font-bold text-slate-800 whitespace-nowrap">กิจกรรม</span>
-                    <div className="inline-block px-3.5 py-0.5 bg-white/95 border border-sky-400 text-sky-900 rounded-full text-[16px] font-bold shadow-xs truncate max-w-md">
+                    <div className="inline-flex items-center px-3 py-1 bg-white border border-sky-400 text-sky-900 rounded-full text-[15px] font-bold shadow-xs leading-none truncate max-w-md">
                       {report.activityName}
                     </div>
                   </div>
 
                   {/* Budget & Responsible Metadata */}
-                  <div className="flex flex-wrap items-center gap-x-4 text-[16px] text-slate-700 font-medium mt-1 leading-tight">
+                  <div className="flex flex-wrap items-center gap-x-4 text-[15px] text-slate-800 font-medium leading-snug">
                     <div>
                       งบประมาณ : <b className="text-slate-950">{(report.allocatedBudget || 0).toLocaleString()} บาท</b>
                     </div>
@@ -231,11 +234,11 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                   {/* Natural auto-spacing: เป้าหมาย moves up close to วัตถุประสงค์ with balanced spacing */}
                   <div className="col-span-5 flex flex-col pr-3.5 border-r border-slate-200 overflow-hidden space-y-3">
                     {/* วัตถุประสงค์ */}
-                    <div className="bg-amber-50/40 border border-amber-200/80 rounded-xl p-3 shadow-2xs">
-                      <div className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[16px] font-bold px-3 py-0.5 rounded-full shadow-xs mb-1.5">
+                    <div className="bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 shadow-2xs">
+                      <div className="inline-flex items-center px-3 py-1 bg-amber-500 text-white text-[15px] font-bold rounded-full shadow-2xs mb-2 leading-none">
                         วัตถุประสงค์
                       </div>
-                      <div className="text-[16px] text-slate-800 space-y-1.5 pl-1 leading-snug">
+                      <div className="text-[16px] text-slate-800 space-y-1.5 pl-1 leading-normal">
                         {(report.objectives || []).slice(0, 3).map((obj, i) => (
                           <div key={i} className="flex items-start space-x-1.5">
                             <span className="font-bold text-slate-900">{i + 1}.</span>
@@ -246,24 +249,24 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                     </div>
 
                     {/* เป้าหมาย: อยู่ต่อเนื่องด้านล่างอย่างพอดี */}
-                    <div className="bg-amber-50/40 border border-amber-200/80 rounded-xl p-3 shadow-2xs">
-                      <div className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[16px] font-bold px-3 py-0.5 rounded-full shadow-xs mb-1.5">
+                    <div className="bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 shadow-2xs">
+                      <div className="inline-flex items-center px-3 py-1 bg-amber-500 text-white text-[15px] font-bold rounded-full shadow-2xs mb-2 leading-none">
                         เป้าหมาย
                       </div>
-                      <div className="space-y-2.5 pl-1 text-[16px] leading-snug">
+                      <div className="space-y-2 pl-1 text-[16px] leading-normal">
                         <div>
-                          <div className="font-bold text-amber-900 flex items-center gap-1">
-                            <span>•</span>
+                          <div className="font-bold text-amber-900 flex items-center gap-1.5">
+                            <span className="text-amber-600">▪</span>
                             <span>เชิงปริมาณ</span>
                           </div>
-                          <p className="text-slate-800 pl-3">{report.quantitativeTarget || '-'}</p>
+                          <p className="text-slate-800 pl-3.5 pt-0.5">{report.quantitativeTarget || '-'}</p>
                         </div>
                         <div>
-                          <div className="font-bold text-amber-900 flex items-center gap-1">
-                            <span>•</span>
+                          <div className="font-bold text-amber-900 flex items-center gap-1.5">
+                            <span className="text-amber-600">▪</span>
                             <span>เชิงคุณภาพ</span>
                           </div>
-                          <p className="text-slate-800 pl-3">{report.qualitativeTarget || '-'}</p>
+                          <p className="text-slate-800 pl-3.5 pt-0.5">{report.qualitativeTarget || '-'}</p>
                         </div>
                       </div>
                     </div>
@@ -274,10 +277,10 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                   <div className="col-span-7 flex flex-col pl-1 overflow-hidden space-y-2">
                     {/* ขอบเขตของโครงการ */}
                     <div>
-                      <div className="text-[16px] font-bold text-slate-900 leading-none mb-0.5">
+                      <div className="text-[16px] font-bold text-slate-900 leading-snug mb-0.5">
                         ขอบเขตของโครงการ
                       </div>
-                      <div className="text-[15px] text-slate-700 leading-tight">
+                      <div className="text-[15px] text-slate-700 leading-normal">
                         <div>ระยะเวลาดำเนินงาน: ระหว่าง วันที่ {report.periodStart || '-'} ถึง {report.periodEnd || '-'}</div>
                         <div>งบประมาณ จำนวน <b className="text-slate-900 font-bold">{(report.actualUsedBudget || 0).toLocaleString()} บาท</b> (คงเหลือ {((report.allocatedBudget || 0) - (report.actualUsedBudget || 0)).toLocaleString()} บาท)</div>
                       </div>
@@ -285,27 +288,27 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
 
                     {/* ผลการดำเนินงาน */}
                     <div>
-                      <div className="inline-block bg-amber-100 text-amber-900 text-[15px] font-bold px-2 py-0.5 rounded mb-0.5 leading-tight">
+                      <div className="inline-flex items-center px-2.5 py-0.5 bg-amber-100 text-amber-950 text-[14px] font-bold rounded mb-1 leading-normal">
                         ผลการดำเนินงาน
                       </div>
-                      <p className="text-[16px] text-slate-800 leading-snug line-clamp-3">
+                      <p className="text-[15px] text-slate-800 leading-normal">
                         {report.performanceResult || 'การดำเนินงานบรรลุตามวัตถุประสงค์ที่กำหนดไว้ทุกประการ นักเรียนและบุคลากรได้รับประโยชน์และมีส่วนร่วมอย่างมีประสิทธิภาพ'}
                       </p>
                     </div>
 
                     {/* ปัญหา/อุปสรรค/ข้อเสนอแนะ */}
                     <div>
-                      <div className="text-[15px] font-bold text-slate-900 leading-none mb-0.5">
+                      <div className="text-[15px] font-bold text-slate-900 leading-snug mb-0.5">
                         ปัญหา/อุปสรรค/ข้อเสนอแนะ
                       </div>
-                      <p className="text-[15px] text-slate-700 leading-snug line-clamp-2">
+                      <p className="text-[15px] text-slate-700 leading-normal">
                         {report.problemsObstacles || 'การจัดกิจกรรมเป็นไปด้วยความเรียบร้อย ไม่มีปัญหาหรืออุปสรรค'}
                       </p>
                     </div>
 
                     {/* ภาพกิจกรรม 3 ภาพ: ขยายให้ใหญ่ขึ้นชัดเจน มองออกว่าทำอะไร (h-36 ~ 144px) */}
                     <div>
-                      <div className="text-[16px] font-bold text-slate-900 leading-none mb-1.5 flex items-center justify-between">
+                      <div className="text-[16px] font-bold text-slate-900 leading-snug mb-1.5 flex items-center justify-between">
                         <span>ภาพกิจกรรม</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2.5">
@@ -333,7 +336,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
 
                     {/* สรุปผลการดำเนินงานตามเป้าหมาย / ตัวชี้วัด */}
                     <div>
-                      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[15px] font-bold px-2.5 py-0.5 rounded shadow-2xs mb-0.5 leading-tight">
+                      <div className="inline-flex items-center px-3 py-1 bg-amber-500 text-white text-[14px] font-bold rounded mb-1 leading-none shadow-2xs">
                         สรุปผลการดำเนินงานตามเป้าหมาย / ตัวชี้วัด
                       </div>
                       <table className="w-full text-[15px] border-collapse border border-slate-300">
