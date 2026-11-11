@@ -30,26 +30,35 @@ function parseNum(val: any): number {
 export async function syncActivityExpensesToSheet(act: Activity): Promise<boolean> {
   const sheetCode = (act.sheetCode || '').trim();
   const expenses = act.expenses || [];
+  let webAppOk = false;
 
-  // 1. Always fire POST to Google Apps Script Web App
+  // 1. Always POST to Google Apps Script Web App and await completion (prevents Vercel early termination)
   if (GOOGLE_SHEETS_WEBAPP_URL) {
-    fetch(GOOGLE_SHEETS_WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'SYNC_EXPENSES',
-        sheetCode,
-        activityId: act.id,
-        activityName: act.name,
-        expenses
-      })
-    }).catch((err) => {
+    try {
+      const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SYNC_EXPENSES',
+          sheetCode,
+          activityId: act.id,
+          activityName: act.name,
+          expenses
+        }),
+        redirect: 'follow',
+        signal: AbortSignal.timeout(8000)
+      });
+      if (res.ok) {
+        const text = await res.text();
+        webAppOk = text.includes('"success":true');
+      }
+    } catch (err) {
       console.error('Error pushing expenses to Google Sheets WebApp:', err);
-    });
+    }
   }
 
-  // 2. If sheetCode exists, also write directly via `gsheets mutate batch` if CLI is available
-  if (!sheetCode) return false;
+  // 2. If sheetCode exists, also write directly via `gsheets mutate batch` if CLI is available (local Windows/Mac)
+  if (!sheetCode) return webAppOk;
 
   try {
     // Build 32 rows for B6:F37 (Date, Description, Amount, Refund, Note)
@@ -82,7 +91,8 @@ export async function syncActivityExpensesToSheet(act: Activity): Promise<boolea
 
     try {
       await execFileAsync('gsheets', ['mutate', 'batch', SPREADSHEET_ID, '-f', tmpFile], {
-        timeout: 15000
+        timeout: 15000,
+        shell: process.platform === 'win32'
       });
       return true;
     } finally {
@@ -90,9 +100,9 @@ export async function syncActivityExpensesToSheet(act: Activity): Promise<boolea
         if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
       } catch {}
     }
-  } catch (err) {
+  } catch {
     // Ignore if gsheets CLI is not available (e.g. on Vercel Serverless)
-    return false;
+    return webAppOk;
   }
 }
 
@@ -120,7 +130,7 @@ export async function readSubSheetExpensesViaCli(sheetCode: string): Promise<Exp
     const { stdout } = await execFileAsync(
       'gsheets',
       ['readonly', 'read', SPREADSHEET_ID, `${cleanCode}!A6:F37`, '--json'],
-      { timeout: 12000 }
+      { timeout: 12000, shell: process.platform === 'win32' }
     );
     const rows = JSON.parse(stdout);
     if (!Array.isArray(rows)) return [];
@@ -160,7 +170,7 @@ export async function readMasterSheetViaCli(): Promise<SheetSyncRow[] | null> {
     const { stdout } = await execFileAsync(
       'gsheets',
       ['readonly', 'read', SPREADSHEET_ID, 'โครงการ-กิจกรรม!A4:K62', '--json'],
-      { timeout: 15000 }
+      { timeout: 15000, shell: process.platform === 'win32' }
     );
     const rows = JSON.parse(stdout);
     if (!Array.isArray(rows)) return null;

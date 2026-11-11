@@ -102,6 +102,10 @@ async function handleSync() {
     const projectMap = new Map<string, Project>();
     currentProjects.forEach((p) => projectMap.set(p.name, p));
 
+    const projectsToUpsert: { id: string; data: Project }[] = [];
+    const activitiesToUpsert: { id: string; data: Activity }[] = [];
+    const pushToSheetPromises: Promise<boolean>[] = [];
+
     // 4. Process each activity (Two-Way Sync)
     for (const item of sheetActivities) {
       if (!item.name || item.name.trim() === '' || item.name === '-') continue;
@@ -125,7 +129,7 @@ async function handleSync() {
         };
         project = newProj;
         projectMap.set(projectName, newProj);
-        await supabase.from('projects').upsert({ id: newProj.id, data: newProj });
+        projectsToUpsert.push({ id: newProj.id, data: newProj });
       }
 
       const activeProject: Project = project;
@@ -143,36 +147,26 @@ async function handleSync() {
 
         // Two-way expense sync logic:
         if (Array.isArray(item.expenses) && item.expenses.length > 0) {
-          // WebApp provided sub-sheet expenses directly
+          // Sheet (via WebApp) has expense rows -> pull into Web
           expenses = item.expenses;
           used = expenses.reduce((sum: number, e: any) => sum + (e.amount || 0) - (e.refund || 0), 0);
         } else if (sheetUsed !== null && sheetUsed !== used && cleanSheetCode) {
-          // Discrepancy between Web and Google Sheet
+          // Discrepancy between Web and Google Sheet (CLI fallback for local runtime)
           const cliExpenses = await readSubSheetExpensesViaCli(cleanSheetCode);
           if (cliExpenses !== null) {
             const cliUsed = cliExpenses.reduce((s, e) => s + (e.amount || 0) - (e.refund || 0), 0);
             if (cliExpenses.length > 0 && (expenses.length === 0 || cliUsed === sheetUsed)) {
-              // Sheet has updated expenses -> pull to Web
               expenses = cliExpenses;
               used = cliUsed;
             } else if (expenses.length > 0 && cliExpenses.length === 0) {
-              // Web has expenses that are not yet in Sheet -> push to Sheet
-              await syncActivityExpensesToSheet(existing);
+              pushToSheetPromises.push(syncActivityExpensesToSheet(existing));
             }
+          } else if (expenses.length > 0 && sheetUsed === 0) {
+            pushToSheetPromises.push(syncActivityExpensesToSheet(existing));
           }
-        } else if (expenses.length > 0 && cleanSheetCode) {
-          // Ensure Web expenses are pushed to Google Sheets WebApp
-          fetch(GOOGLE_SHEETS_WEBAPP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'SYNC_EXPENSES',
-              sheetCode: cleanSheetCode,
-              activityId: existing.id,
-              activityName: existing.name,
-              expenses
-            })
-          }).catch(() => {});
+        } else if (expenses.length > 0 && cleanSheetCode && (sheetUsed === null || sheetUsed === 0)) {
+          // Web has expenses that are not yet reflected in Google Sheet -> push to Sheet
+          pushToSheetPromises.push(syncActivityExpensesToSheet(existing));
         }
 
         const remaining = Math.max(0, allocatedAmount - used);
@@ -197,7 +191,7 @@ async function handleSync() {
           expenses
         };
 
-        await supabase.from('activities').upsert({ id: updatedActivity.id, data: updatedActivity });
+        activitiesToUpsert.push({ id: updatedActivity.id, data: updatedActivity });
         updatedCount++;
       } else {
         let expenses = Array.isArray(item.expenses) ? item.expenses : [];
@@ -235,9 +229,20 @@ async function handleSync() {
           expenses
         };
 
-        await supabase.from('activities').upsert({ id: newActivity.id, data: newActivity });
+        activitiesToUpsert.push({ id: newActivity.id, data: newActivity });
         addedCount++;
       }
+    }
+
+    // Batch upsert to Supabase & await sheet pushes in parallel
+    if (projectsToUpsert.length > 0) {
+      await supabase.from('projects').upsert(projectsToUpsert);
+    }
+    if (activitiesToUpsert.length > 0) {
+      await supabase.from('activities').upsert(activitiesToUpsert);
+    }
+    if (pushToSheetPromises.length > 0) {
+      await Promise.allSettled(pushToSheetPromises);
     }
 
     return NextResponse.json({
