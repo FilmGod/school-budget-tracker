@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
   // Check auth cookie
   const authToken = request.cookies.get('bwr_auth_token')?.value;
 
-  if (authToken !== 'auth_admin_authenticated') {
+  if (authToken !== 'auth_admin_authenticated' && authToken !== 'auth_teacher_authenticated') {
     const loginUrl = new URL('/login', request.url);
     if (pathname !== '/' && !pathname.startsWith('/api/')) {
       loginUrl.searchParams.set('from', pathname);

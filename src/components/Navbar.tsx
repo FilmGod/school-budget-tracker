@@ -138,8 +138,13 @@ export default function Navbar() {
   };
 
   const handleLogout = async () => {
-    if (confirm('คุณต้องการออกจากระบบเพื่อความปลอดภัยใช่หรือไม่?')) {
-      await fetch('/api/auth/logout', { method: 'POST' });
+    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {}
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('school_budget_is_admin');
+      }
       window.location.href = '/login';
     }
   };

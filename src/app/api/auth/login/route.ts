@@ -5,18 +5,30 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
+    const cleanUser = (username || '').trim().toLowerCase();
+    const cleanPass = (password || '').trim();
 
-    if (username === 'admin' && password === 'bwr01') {
-      const response = NextResponse.json({ success: true });
-      response.cookies.set({
-        name: 'bwr_auth_token',
-        value: 'auth_admin_authenticated',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/'
-      });
-      return response;
+    if (cleanPass === 'bwr01') {
+      const isAdmin = cleanUser === 'admin';
+      const isTeacher = cleanUser === 'teacher' || cleanUser === 'user' || cleanUser === 'ครู';
+
+      if (isAdmin || isTeacher) {
+        const response = NextResponse.json({
+          success: true,
+          role: isAdmin ? 'admin' : 'teacher',
+          isAdmin
+        });
+
+        response.cookies.set({
+          name: 'bwr_auth_token',
+          value: isAdmin ? 'auth_admin_authenticated' : 'auth_teacher_authenticated',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/'
+        });
+        return response;
+      }
     }
 
     return NextResponse.json(

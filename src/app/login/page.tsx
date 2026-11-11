@@ -39,6 +39,9 @@ function LoginForm() {
 
       if (res.ok && data.success) {
         setIsSuccess(true);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('school_budget_is_admin', data.isAdmin ? 'true' : 'false');
+        }
         const targetUrl = (returnUrl && returnUrl !== '/login') ? returnUrl : '/';
         // เด้งเข้าหน้าแดชบอร์ดเองทันที ไม่ต้องรอนับเวลา
         window.location.href = targetUrl;
