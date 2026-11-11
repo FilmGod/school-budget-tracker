@@ -1,4 +1,4 @@
-export type BudgetType = 'งบอุดหนุน' | 'งบพัฒนาผู้เรียน' | 'งบรายได้สถานศึกษา' | 'อื่นๆ';
+export type BudgetType = 'งบพื้นที่นวัตกรรม' | 'งบอุดหนุน' | 'งบพัฒนาผู้เรียน' | 'งบรายได้สถานศึกษา' | 'อื่นๆ';
 
 export interface ExpenseItem {
   id: string;

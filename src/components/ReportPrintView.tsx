@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ActivityReport } from '@/lib/types';
-import { Printer, Download, ArrowLeft, Sparkles, FileText, Check, Image as ImageIcon } from 'lucide-react';
+import { Printer, Download, ArrowLeft, Sparkles, FileText, Check, Image as ImageIcon, Info } from 'lucide-react';
 import { exportReportToDocx } from '@/lib/docxExport';
 
 interface ReportPrintViewProps {
@@ -54,7 +54,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
     }
   };
 
-  const schoolName = 'โรงเรียนบางกล่ำวิทยารัชมังคลาภิเษก';
+  const schoolName = 'โรงเรียนบางกล่ำวิทยา รัชมังคลาภิเษก';
   const areaOffice = 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาสงขลา สตูล';
   const fiscalYearThai = report.fiscalYear || '2570';
 
@@ -117,7 +117,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       {/* Guidance Banner */}
       <div className="max-w-4xl mx-auto mb-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl text-xs text-amber-950 shadow-xs print:hidden">
         <div className="flex items-start space-x-2.5">
-          <span className="text-base">📌</span>
+          <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="space-y-1">
             <div className="font-bold text-[13px] text-amber-950">คำแนะนำการบันทึก PDF ให้ได้ไฟล์คมชัด 1 หน้าจบพอดีเป๊ะ:</div>
             <div className="text-slate-700 leading-relaxed">
@@ -135,11 +135,15 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       {/* 1. INFOGRAPHIC ONE-PAGE TEMPLATE (จัดสัดส่วนตรงตามภาพตัวอย่าง 100%)       */}
       {/* ========================================================================= */}
       {templateType === 'infographic' && (
-        <div className="flex justify-center print:block print:m-0 print:p-0">
+        <div className="flex justify-center print:contents">
           <div 
             id="print-sheet"
-            className="print-page w-[210mm] h-[296mm] max-h-[296mm] min-h-[296mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
+            className="print-page w-[210mm] h-[297mm] max-h-[297mm] min-h-[297mm] bg-white text-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between border border-slate-200 print:border-none print:shadow-none print:m-0"
             style={{ 
+              width: '210mm',
+              height: '297mm',
+              minHeight: '297mm',
+              maxHeight: '297mm',
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
             }}
@@ -159,7 +163,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 <div className="w-[96px] h-[96px] rounded-full shadow-lg border-[3px] border-white flex-shrink-0 relative overflow-hidden bg-[#24588d] flex items-center justify-center">
                   <img
                     src="/school-logo.png"
-                    alt="ตราโรงเรียนบางกล่ำวิทยารัชมังคลาภิเษก"
+                    alt="ตราโรงเรียนบางกล่ำวิทยา รัชมังคลาภิเษก"
                     className="w-full h-full object-cover object-center scale-105"
                   />
                 </div>
@@ -192,32 +196,6 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                     <div>
                       ผู้รับผิดชอบโครงการ : <b className="text-slate-950">{report.responsiblePerson || '-'}</b>
                     </div>
-                  </div>
-                </div>
-
-                {/* QR Code */}
-                <div className="flex-shrink-0 text-center pl-1">
-                  <div className="border border-pink-400 bg-white rounded-xl p-1.5 shadow-xs inline-block">
-                    <div className="text-[10px] font-extrabold text-pink-600 tracking-wider mb-1 uppercase">SCAN ME</div>
-                    <svg className="w-11 h-11" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="33" height="33" rx="3" fill="#0f172a"/>
-                      <rect x="3" y="3" width="9" height="9" fill="white" rx="1"/>
-                      <rect x="5" y="5" width="5" height="5" fill="#0f172a"/>
-                      <rect x="6.5" y="6.5" width="2" height="2" fill="white"/>
-                      <rect x="21" y="3" width="9" height="9" fill="white" rx="1"/>
-                      <rect x="23" y="5" width="5" height="5" fill="#0f172a"/>
-                      <rect x="24.5" y="6.5" width="2" height="2" fill="white"/>
-                      <rect x="3" y="21" width="9" height="9" fill="white" rx="1"/>
-                      <rect x="5" y="23" width="5" height="5" fill="#0f172a"/>
-                      <rect x="6.5" y="24.5" width="2" height="2" fill="white"/>
-                      <rect x="15" y="4" width="3" height="6" fill="white"/>
-                      <rect x="15" y="14" width="6" height="3" fill="white"/>
-                      <rect x="14" y="21" width="4" height="4" fill="white"/>
-                      <rect x="22" y="16" width="3" height="4" fill="white"/>
-                      <rect x="26" y="22" width="4" height="3" fill="white"/>
-                      <rect x="20" y="25" width="3" height="5" fill="white"/>
-                      <rect x="26" y="27" width="4" height="3" fill="white"/>
-                    </svg>
                   </div>
                 </div>
               </div>
@@ -281,7 +259,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       </div>
                       <div className="text-[15px] text-slate-700 leading-normal">
                         <div>ระยะเวลาดำเนินงาน: ระหว่าง วันที่ {report.periodStart || '-'} ถึง {report.periodEnd || '-'}</div>
-                        <div>งบประมาณ จำนวน <b className="text-slate-900 font-bold">{(report.actualUsedBudget || 0).toLocaleString()} บาท</b> (คงเหลือ {((report.allocatedBudget || 0) - (report.actualUsedBudget || 0)).toLocaleString()} บาท)</div>
+                        <div>งบประมาณที่ใช้ จำนวน <b className="text-slate-900 font-bold">{(report.actualUsedBudget || 0).toLocaleString()} บาท</b></div>
                       </div>
                     </div>
 
@@ -291,7 +269,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                         ผลการดำเนินงาน
                       </div>
                       <p className="text-[15px] text-slate-800 leading-normal">
-                        {report.performanceResult || 'การดำเนินงานบรรลุตามวัตถุประสงค์ที่กำหนดไว้ทุกประการ นักเรียนและบุคลากรได้รับประโยชน์และมีส่วนร่วมอย่างมีประสิทธิภาพ'}
+                        {report.performanceResult || 'การดำเนินงานเป็นไปตามวัตถุประสงค์และเป้าหมายที่กำหนดไว้ในแผนปฏิบัติการ'}
                       </p>
                     </div>
 
@@ -407,10 +385,14 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       {/* 2. FORMAL GOVERNMENT A4 TEMPLATE (ฟิตพอดี 1 หน้ากระดาษ A4 สัดส่วนราชการ) */}
       {/* ========================================================================= */}
       {templateType === 'formal' && (
-        <div className="flex justify-center print:block print:m-0 print:p-0">
+        <div className="flex justify-center print:contents">
           <div 
             className="print-page w-[210mm] h-[297mm] max-h-[297mm] min-h-[297mm] bg-white px-10 py-9 shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 flex flex-col justify-between overflow-hidden"
             style={{ 
+              width: '210mm',
+              height: '297mm',
+              minHeight: '297mm',
+              maxHeight: '297mm',
               boxSizing: 'border-box',
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
             }}
@@ -426,10 +408,10 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 </p>
               </div>
 
-              {/* ๑. ข้อมูลทั่วไปของโครงการและกิจกรรม (Header 16pt, Body 14pt) */}
+              {/* 1. ข้อมูลทั่วไปของโครงการและกิจกรรม (Header 16pt, Body 14pt) */}
               <div className="space-y-1.5">
                 <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
-                  ๑. ข้อมูลทั่วไปของโครงการและกิจกรรม
+                  1. ข้อมูลทั่วไปของโครงการและกิจกรรม
                 </h2>
                 <div className="space-y-1 pl-3 text-[14px] text-slate-900 leading-snug">
                   <div>
@@ -473,10 +455,10 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 </div>
               </div>
 
-              {/* ๒. รายละเอียดการดำเนินงานและผลลัพธ์ (Header 16pt, Body 14pt) */}
+              {/* 2. รายละเอียดการดำเนินงานและผลลัพธ์ (Header 16pt, Body 14pt) */}
               <div className="space-y-1.5">
                 <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
-                  ๒. รายละเอียดการดำเนินงานและผลลัพธ์
+                  2. รายละเอียดการดำเนินงานและผลลัพธ์
                 </h2>
                 <div className="space-y-1 pl-3 text-[14px] text-slate-900 leading-snug">
                   <div>
@@ -502,10 +484,10 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 </div>
               </div>
 
-              {/* ๓. สรุปผลการประเมินตามวัตถุประสงค์ (Header 16pt, Table 14pt) */}
+              {/* 3. สรุปผลการประเมินตามวัตถุประสงค์ (Header 16pt, Table 14pt) */}
               <div className="space-y-1.5">
                 <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
-                  ๓. สรุปผลการประเมินตามวัตถุประสงค์
+                  3. สรุปผลการประเมินตามวัตถุประสงค์
                 </h2>
                 <table className="w-full text-[14px] border-collapse border border-slate-900 text-slate-900">
                   <thead>
@@ -533,10 +515,10 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 </table>
               </div>
 
-              {/* ๔. ภาพถ่ายกิจกรรม (๓ ภาพ) (Header 16pt, Captions 14pt, Images h-32 ไม่แบน) */}
+              {/* 4. ภาพถ่ายกิจกรรม (3 ภาพ) (Header 16pt, Captions 14pt, Images h-32 ไม่แบน) */}
               <div className="space-y-1.5">
                 <h2 className="font-bold underline text-[16px] text-slate-950 leading-normal">
-                  ๔. ภาพถ่ายกิจกรรม (๓ ภาพ)
+                  4. ภาพถ่ายกิจกรรม (3 ภาพ)
                 </h2>
                 <div className="grid grid-cols-3 gap-3 pt-1">
                   {[0, 1, 2].map((idx) => {

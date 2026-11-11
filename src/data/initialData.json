@@ -3,7 +3,7 @@
     {
       "id": "2570",
       "name": "ปีงบประมาณ 2570",
-      "schoolName": "โรงเรียนบางกล่ำวิทยารัชมังคลาภิเษก",
+      "schoolName": "โรงเรียนบางกล่ำวิทยา รัชมังคลาภิเษก",
       "isDefault": true,
       "createdAt": "2026-11-09T17:08:28.788Z"
     }
@@ -32,6 +32,12 @@
       "name": "ฝ่ายบริหารงบประมาณ",
       "icon": "Coins",
       "color": "#8b5cf6"
+    },
+    {
+      "id": "surplus",
+      "name": "งบเหลือจ่าย",
+      "icon": "PiggyBank",
+      "color": "#ec4899"
     }
   ],
   "projects": [
@@ -1385,51 +1391,5 @@
       "createdAt": "2026-10-25T10:00:00.000Z"
     }
   ],
-  "documents": [
-    {
-      "id": "doc_master_plan_2570",
-      "fiscalYear": "2570",
-      "departmentId": "all",
-      "title": "เล่มแผนปฏิบัติการประจำปีงบประมาณ 2570 (ฉบับสมบูรณ์)",
-      "docType": "plan_book",
-      "gdriveUrl": "https://drive.google.com/drive/folders/1sMVxmsE9hNw2vc5se50OuC__ZAqBHZCJ",
-      "updatedAt": "2569-10-01"
-    },
-    {
-      "id": "doc_dept_academic",
-      "fiscalYear": "2570",
-      "departmentId": "academic",
-      "title": "โฟลเดอร์รวบรวมไฟล์โครงการฝ่ายบริหารวิชาการ ปีงบ 2570",
-      "docType": "folder",
-      "gdriveUrl": "https://drive.google.com/",
-      "updatedAt": "2569-10-15"
-    },
-    {
-      "id": "doc_dept_general",
-      "fiscalYear": "2570",
-      "departmentId": "general",
-      "title": "โฟลเดอร์รวบรวมไฟล์โครงการฝ่ายบริหารทั่วไป ปีงบ 2570",
-      "docType": "folder",
-      "gdriveUrl": "https://drive.google.com/",
-      "updatedAt": "2569-10-15"
-    },
-    {
-      "id": "doc_dept_personnel",
-      "fiscalYear": "2570",
-      "departmentId": "personnel",
-      "title": "โฟลเดอร์รวบรวมไฟล์โครงการฝ่ายบริหารงานบุคคล ปีงบ 2570",
-      "docType": "folder",
-      "gdriveUrl": "https://drive.google.com/",
-      "updatedAt": "2569-10-15"
-    },
-    {
-      "id": "doc_dept_budget",
-      "fiscalYear": "2570",
-      "departmentId": "budget",
-      "title": "โฟลเดอร์รวบรวมไฟล์โครงการฝ่ายบริหารงบประมาณ ปีงบ 2570",
-      "docType": "folder",
-      "gdriveUrl": "https://drive.google.com/",
-      "updatedAt": "2569-10-15"
-    }
-  ]
+  "documents": []
 }

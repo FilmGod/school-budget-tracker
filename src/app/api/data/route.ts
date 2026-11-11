@@ -82,17 +82,73 @@ export async function POST(req: NextRequest) {
 
       case 'SAVE_ACTIVITY': {
         await supabase.from('activities').upsert({ id: payload.id, data: payload });
+        
+        // Also sync to local DB fallback
+        try {
+          const ldb = getLocalDB();
+          const existingIdx = ldb.activities.findIndex(a => a.id === payload.id);
+          if (existingIdx >= 0) {
+            ldb.activities[existingIdx] = payload;
+          } else {
+            ldb.activities.push(payload);
+          }
+          saveLocalDB(ldb);
+        } catch (e) {
+          console.error('Error saving activity to local DB:', e);
+        }
+
+        // Forward to Google Sheets Web App if configured
+        const webappUrl = process.env.GOOGLE_SHEETS_WEBAPP_URL;
+        if (webappUrl) {
+          fetch(webappUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'ADD_ACTIVITY', data: payload })
+          }).catch(err => console.error('Error forwarding activity to Google Sheets:', err));
+        }
         return NextResponse.json({ success: true, data: payload });
       }
 
       case 'DELETE_ACTIVITY': {
         await supabase.from('activities').delete().eq('id', payload.id);
+        try {
+          const ldb = getLocalDB();
+          ldb.activities = ldb.activities.filter(a => a.id !== payload.id);
+          saveLocalDB(ldb);
+        } catch (e) {
+          console.error('Error deleting activity from local DB:', e);
+        }
         return NextResponse.json({ success: true, data: { id: payload.id } });
       }
 
       case 'ADD_PROJECT': {
         await supabase.from('projects').upsert({ id: payload.id, data: payload });
+        try {
+          const ldb = getLocalDB();
+          const existingIdx = (ldb.projects || []).findIndex(p => p.id === payload.id);
+          if (existingIdx >= 0) {
+            ldb.projects[existingIdx] = payload;
+          } else {
+            if (!ldb.projects) ldb.projects = [];
+            ldb.projects.push(payload);
+          }
+          saveLocalDB(ldb);
+        } catch (e) {
+          console.error('Error saving project to local DB:', e);
+        }
         return NextResponse.json({ success: true, data: payload });
+      }
+
+      case 'DELETE_PROJECT': {
+        await supabase.from('projects').delete().eq('id', payload.id);
+        try {
+          const ldb = getLocalDB();
+          ldb.projects = (ldb.projects || []).filter(p => p.id !== payload.id);
+          saveLocalDB(ldb);
+        } catch (e) {
+          console.error('Error deleting project from local DB:', e);
+        }
+        return NextResponse.json({ success: true, data: { id: payload.id } });
       }
 
       case 'RECORD_EXPENSE': {
@@ -159,7 +215,7 @@ export async function POST(req: NextRequest) {
         for (const r of initialData.reports || []) {
           await supabase.from('reports').upsert({ id: r.id, data: r });
         }
-        for (const doc of initialData.documents || []) {
+        for (const doc of ((initialData as DatabaseSchema).documents || [])) {
           await supabase.from('documents').upsert({ id: doc.id, data: doc });
         }
         return NextResponse.json({ success: true, data: initialData });

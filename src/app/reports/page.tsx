@@ -289,7 +289,7 @@ function ReportsContent() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             {activeTab === 'form' 
-              ? 'กรอกรายละเอียดผลการจัดกิจกรรม แล้วส่งออกเป็นเอกสารราชการ Word (.docx) และ PDF ได้ทันที'
+              ? 'บันทึกสรุปผลการดำเนินงานโครงการ/กิจกรรม และพิมพ์แบบรายงานราชการ (A4)'
               : 'รายการกิจกรรมที่ได้รับการรายงานผลแล้วในระบบ สามารถดูตัวอย่าง สั่งพิมพ์ หรือแก้ไขข้อมูลได้'
             }
           </p>
@@ -409,7 +409,7 @@ function ReportsContent() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-100">
               <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
-                ๑
+                1
               </span>
               <h2 className="text-base font-bold text-slate-900">
                 ข้อมูลทั่วไปของโครงการและกิจกรรม
@@ -473,6 +473,7 @@ function ReportsContent() {
                   onChange={(e) => setBudgetSource(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
                 >
+                  <option value="งบพื้นที่นวัตกรรม">งบพื้นที่นวัตกรรม</option>
                   <option value="งบอุดหนุน">งบอุดหนุน</option>
                   <option value="งบพัฒนาผู้เรียน">งบพัฒนาผู้เรียน</option>
                   <option value="งบรายได้สถานศึกษา">งบรายได้สถานศึกษา</option>
@@ -553,7 +554,7 @@ function ReportsContent() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-100">
               <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
-                ๒
+                2
               </span>
               <h2 className="text-base font-bold text-slate-900">
                 รายละเอียดการดำเนินงานและผลลัพธ์
@@ -572,7 +573,7 @@ function ReportsContent() {
                   className="text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center space-x-1"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ เพิ่มข้อวัตถุประสงค์</span>
+                  <span>เพิ่มข้อวัตถุประสงค์</span>
                 </button>
               </div>
 
@@ -663,7 +664,7 @@ function ReportsContent() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-100">
               <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
-                ๓
+                3
               </span>
               <h2 className="text-base font-bold text-slate-900">
                 สรุปผลการประเมินตามวัตถุประสงค์ (เลือกว่า บรรลุ หรือ ไม่บรรลุ)
@@ -720,10 +721,10 @@ function ReportsContent() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-100">
               <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
-                ๔
+                4
               </span>
               <h2 className="text-base font-bold text-slate-900">
-                ภาพถ่ายกิจกรรม ๓ ภาพ (อัปโหลดจากเครื่อง หรือใช้รูปที่จัดเตรียม)
+                ภาพถ่ายกิจกรรม 3 ภาพ (อัปโหลดจากเครื่อง หรือใช้รูปที่จัดเตรียม)
               </h2>
             </div>
 
@@ -764,7 +765,7 @@ function ReportsContent() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-100">
               <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
-                ๕
+                5
               </span>
               <h2 className="text-base font-bold text-slate-900">
                 การลงชื่อผู้รายงาน และผู้บริหาร
@@ -932,7 +933,7 @@ function ReportsContent() {
             className="inline-flex items-center space-x-1 px-3.5 py-1.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-xs transition-all flex-shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>+ เขียนรายงานใหม่</span>
+            <span>เขียนรายงานใหม่</span>
           </button>
         </div>
       </div>
@@ -949,7 +950,7 @@ function ReportsContent() {
                 {searchReportText ? 'ไม่พบรายงานที่ตรงกับการค้นหา' : `ยังไม่มีรายงานกิจกรรมในปีงบประมาณ ${currentYear}`}
               </h3>
               <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                {searchReportText ? 'ลองค้นหาด้วยคำอื่น หรือกดล้างการค้นหา' : 'คุณครูสามารถเริ่มต้นเขียนรายงานผลกิจกรรมเพื่อบันทึกและพิมพ์เอกสารราชการได้ทันที'}
+                {searchReportText ? 'ลองค้นหาด้วยคำอื่น หรือกดล้างการค้นหา' : 'ยังไม่มีรายงานสรุปผลกิจกรรม สามารถกดปุ่มเขียนรายงานใหม่เพื่อเริ่มบันทึกข้อมูล'}
               </p>
               {!searchReportText && (
                 <button
@@ -957,7 +958,7 @@ function ReportsContent() {
                   className="mt-4 inline-flex items-center space-x-2 px-5 py-2.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-sm transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>+ เริ่มเขียนรายงานแรก</span>
+                  <span>เริ่มเขียนรายงานแรก</span>
                 </button>
               )}
             </div>
@@ -969,7 +970,7 @@ function ReportsContent() {
                 return (
                   <div 
                     key={r.id} 
-                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all space-y-4"
+                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover-card space-y-4"
                   >
                     {/* Header Row */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-slate-100">
@@ -1106,8 +1107,10 @@ function ReportsContent() {
           </div>
 
           {unreportedActivities.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">
-              🎉 ยอดเยี่ยม! กิจกรรมทั้งหมดในปีงบประมาณ {currentYear} ได้รับการรายงานผลครบถ้วนแล้ว
+            <div className="p-8 text-center text-xs text-slate-500 flex items-center justify-center space-x-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span className="font-semibold text-emerald-700">ยอดเยี่ยม!</span>
+              <span>กิจกรรมทั้งหมดในปีงบประมาณ {currentYear} ได้รับการรายงานผลครบถ้วนแล้ว</span>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">

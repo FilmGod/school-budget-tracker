@@ -165,7 +165,7 @@ export async function exportReportToDocx(report: ActivityReport) {
             spacing: { before: 200, after: 120 },
             children: [
               new TextRun({
-                text: '๑. ส่วนหัวข้อมูลโครงการและกิจกรรม',
+                text: '1. ข้อมูลทั่วไปของโครงการและกิจกรรม',
                 font: 'TH Sarabun PSK',
                 size: 32,
                 bold: true,
@@ -220,7 +220,7 @@ export async function exportReportToDocx(report: ActivityReport) {
             spacing: { before: 200, after: 120 },
             children: [
               new TextRun({
-                text: '๒. รายละเอียดการดำเนินงานและผลลัพธ์',
+                text: '2. รายละเอียดการดำเนินงานและผลลัพธ์',
                 font: 'TH Sarabun PSK',
                 size: 32,
                 bold: true,
@@ -277,7 +277,7 @@ export async function exportReportToDocx(report: ActivityReport) {
             spacing: { before: 200, after: 120 },
             children: [
               new TextRun({
-                text: '๓. สรุปผลการประเมินตามวัตถุประสงค์',
+                text: '3. สรุปผลการประเมินตามวัตถุประสงค์',
                 font: 'TH Sarabun PSK',
                 size: 32,
                 bold: true,
@@ -341,7 +341,7 @@ export async function exportReportToDocx(report: ActivityReport) {
             spacing: { before: 300, after: 120 },
             children: [
               new TextRun({
-                text: '๔. ภาพถ่ายกิจกรรม (๓ ภาพ)',
+                text: '4. ภาพถ่ายกิจกรรม (3 ภาพ)',
                 font: 'TH Sarabun PSK',
                 size: 32,
                 bold: true,

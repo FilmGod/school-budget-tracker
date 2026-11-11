@@ -17,8 +17,7 @@ import {
   Coins, 
   Edit3, 
   Trash2, 
-  Calendar,
-  Sparkles
+  AlertCircle
 } from 'lucide-react';
 
 export default function DocumentsPage() {
@@ -36,6 +35,7 @@ export default function DocumentsPage() {
 
   // Master Plan Books
   const masterBooks = filteredDocuments.filter(d => d.departmentId === 'all' || d.docType === 'plan_book');
+  const masterPlanDoc = masterBooks[0];
 
   // Department Folder mapping
   const departmentConfigs = [
@@ -44,9 +44,6 @@ export default function DocumentsPage() {
     { id: 'personnel', name: 'ฝ่ายบริหารงานบุคคล', icon: Users, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
     { id: 'budget', name: 'ฝ่ายบริหารงบประมาณ', icon: Coins, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
   ];
-
-  // Activities with specific GDrive URLs (if any)
-  const activitiesWithDrive = filteredActivities.filter(a => a.gdriveUrl && a.gdriveUrl.trim().length > 0);
 
   const handleDelete = async (id: string, title: string) => {
     if (confirm(`คุณต้องการลบเอกสาร "${title}" ใช่หรือไม่?`)) {
@@ -59,15 +56,15 @@ export default function DocumentsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-sky-50 text-sky-700 text-xs font-semibold rounded-full border border-sky-100 mb-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 text-xs font-semibold rounded-full border border-sky-100 dark:border-sky-900 mb-2">
             <FolderDown className="w-3.5 h-3.5" />
-            <span>คลังเอกสารและโฟลเดอร์ Google Drive ปีงบ {currentYear}</span>
+            <span>คลังรวมไฟล์เอกสารงานแผน ปีงบ {currentYear}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            รวมเล่มแผนปฏิบัติการและไฟล์โครงการ
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            รวมไฟล์เอกสารงานแผน
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            เข้าถึงเล่มแผนปฏิบัติการประจำปี และไฟล์ PDF รายงานโครงการของแต่ละฝ่ายผ่าน Google Drive
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            เล่มแผนปฏิบัติการประจำปีและคลังเอกสารทางการเงิน
           </p>
         </div>
 
@@ -77,10 +74,10 @@ export default function DocumentsPage() {
               setEditingDoc(null);
               setShowModal(true);
             }}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+            className="active-press inline-flex items-center space-x-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>+ เพิ่มลิงก์เอกสาร / ไดรฟ์</span>
+            <span>เพิ่มลิงก์เอกสาร / ไดรฟ์</span>
           </button>
         )}
       </div>
@@ -98,19 +95,37 @@ export default function DocumentsPage() {
             เล่มแผนปฏิบัติการประจำปีงบประมาณ {currentYear}
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            รวบรวมแผนงาน โครงการ กิจกรรม และการจัดสรรงบประมาณทั้งหมดของโรงเรียนตามระเบียบราชการ เชื่อมโยงตรงกับ Google Drive ให้สามารถเปิดดูไฟล์ฉบับเต็มและดาวน์โหลดได้ตลอดเวลา
+            เอกสารแผนปฏิบัติการประจำปีฉบับสมบูรณ์ และแบบฟอร์มงานแผนงานโรงเรียน
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-3">
-            <a
-              href="https://docs.google.com/spreadsheets/d/1sMVxmsE9hNw2vc5se50OuC__ZAqBHZCJ/edit?usp=sharing"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold shadow-lg shadow-sky-500/25 transition-all"
-            >
-              <span>เปิดดูไฟล์ Google Drive ฉบับเต็ม</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            {masterPlanDoc && masterPlanDoc.gdriveUrl ? (
+              <a
+                href={masterPlanDoc.gdriveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center space-x-2 px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold shadow-lg shadow-sky-500/25 transition-all"
+              >
+                <span>เปิดดูไฟล์ Google Drive ฉบับเต็ม</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            ) : (
+              <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-xl text-xs font-medium text-slate-300 border border-white/10">
+                <AlertCircle className="w-4 h-4 text-amber-400" />
+                <span>รอผู้ดูแลระบบ (Admin) เพิ่มลิงก์เอกสารเล่มแผนปฏิบัติการ</span>
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setEditingDoc(null);
+                      setShowModal(true);
+                    }}
+                    className="ml-2 px-2.5 py-1 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-lg text-[11px] transition-colors"
+                  >
+                    + ใส่ลิงก์ตอนนี้
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -118,10 +133,10 @@ export default function DocumentsPage() {
       {/* 2. Folders by 4 Departments */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">
-            โฟลเดอร์รวบรวมเอกสารแยกตาม ๔ ฝ่าย
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            โฟลเดอร์รวบรวมเอกสารแยกตาม 4 ฝ่าย
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             คลิกเพื่อเปิดโฟลเดอร์ Google Drive ของแต่ละฝ่ายสำหรับดูและอัปโหลดไฟล์ PDF
           </p>
         </div>
@@ -135,11 +150,11 @@ export default function DocumentsPage() {
             return (
               <div
                 key={dept.id}
-                className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-white dark:bg-[#1e293b] rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover-card flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className={`w-10 h-10 rounded-xl ${dept.bg} ${dept.color} flex items-center justify-center border ${dept.border}`}>
+                    <div className={`w-10 h-10 rounded-xl ${dept.bg} dark:bg-slate-800 ${dept.color} flex items-center justify-center border ${dept.border} dark:border-slate-700`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     {isAdmin && doc && (
@@ -150,6 +165,7 @@ export default function DocumentsPage() {
                             setShowModal(true);
                           }}
                           className="p-1 text-slate-400 hover:text-sky-600 rounded"
+                          title="แก้ไขลิงก์"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
@@ -157,23 +173,52 @@ export default function DocumentsPage() {
                     )}
                   </div>
 
-                  <h3 className="text-sm font-bold text-slate-900">{dept.name}</h3>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">{dept.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {actCount} โครงการ/กิจกรรมในสังกัด
                   </p>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-100">
-                  <a
-                    href={doc?.gdriveUrl || 'https://drive.google.com/'}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors"
-                  >
-                    <Folder className="w-4 h-4 text-amber-500" />
-                    <span>เปิดโฟลเดอร์ Drive</span>
-                    <ExternalLink className="w-3 h-3 text-slate-400" />
-                  </a>
+                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+                  {doc && doc.gdriveUrl ? (
+                    <a
+                      href={doc.gdriveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
+                    >
+                      <Folder className="w-4 h-4 text-amber-500" />
+                      <span>เปิดโฟลเดอร์ Drive</span>
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
+                    </a>
+                  ) : (
+                    <div className="text-center">
+                      {isAdmin ? (
+                        <button
+                          onClick={() => {
+                            setEditingDoc({
+                              id: `doc_dept_${dept.id}`,
+                              fiscalYear: currentYear,
+                              departmentId: dept.id,
+                              title: `โฟลเดอร์${dept.name} ปีงบ ${currentYear}`,
+                              docType: 'folder',
+                              gdriveUrl: '',
+                              updatedAt: new Date().toISOString().split('T')[0]
+                            });
+                            setShowModal(true);
+                          }}
+                          className="active-press w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-xs font-semibold rounded-xl border border-sky-200 dark:border-sky-800 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>ใส่ลิงก์ Drive ฝ่ายนี้</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 block py-1.5">
+                          รอแอดมินเพิ่มลิงก์โฟลเดอร์
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -182,95 +227,121 @@ export default function DocumentsPage() {
       </div>
 
       {/* 3. All Documents & Links Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
               รายการเอกสารและไฟล์ PDF โครงการทั้งหมด
             </h3>
-            <p className="text-xs text-slate-500">
-              รวมลิงก์เข้าถึงเอกสารแนบ แผนปฏิบัติการ และสรุปผลโครงการ
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              เอกสารแนบและไฟล์สรุปผลโครงการ
             </p>
           </div>
-          <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+          <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg">
             {filteredDocuments.length} รายการ
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4">ชื่อเอกสาร / รายละเอียด</th>
-                <th className="py-3 px-4 w-44">ฝ่ายที่รับผิดชอบ</th>
-                <th className="py-3 px-4 w-36">ประเภท</th>
-                <th className="py-3 px-4 w-32">อัปเดตเมื่อ</th>
-                <th className="py-3 px-4 text-center w-36">ลิงก์ Google Drive</th>
-                {isAdmin && <th className="py-3 px-4 text-center w-24">จัดการ</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredDocuments.map((doc) => {
-                const deptObj = db.departments.find(d => d.id === doc.departmentId);
-                const deptName = doc.departmentId === 'all' ? 'รวมทั้งโรงเรียน' : (deptObj?.name || '-');
+        {filteredDocuments.length === 0 ? (
+          <div className="p-12 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">ยังไม่มีรายการเอกสารแนบในระบบ</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                ยังไม่มีการเพิ่มรายการเอกสารในหมวดนี้
+              </p>
+            </div>
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setEditingDoc(null);
+                  setShowModal(true);
+                }}
+                className="active-press inline-flex items-center space-x-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all mt-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>เพิ่มลิงก์เอกสารแรก</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th className="py-3 px-4">ชื่อเอกสาร / รายละเอียด</th>
+                  <th className="py-3 px-4 w-44">ฝ่ายที่รับผิดชอบ</th>
+                  <th className="py-3 px-4 w-36">ประเภท</th>
+                  <th className="py-3 px-4 w-32">อัปเดตเมื่อ</th>
+                  <th className="py-3 px-4 text-center w-36">ลิงก์ Google Drive</th>
+                  {isAdmin && <th className="py-3 px-4 text-center w-24">จัดการ</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredDocuments.map((doc) => {
+                  const deptObj = db.departments.find(d => d.id === doc.departmentId);
+                  const deptName = doc.departmentId === 'all' ? 'รวมทั้งโรงเรียน' : (deptObj?.name || '-');
 
-                return (
-                  <tr key={doc.id} className="hover:bg-slate-50/60">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center space-x-2">
-                        <FileText className="w-4 h-4 text-sky-600 flex-shrink-0" />
-                        <span className="font-bold text-slate-800">{doc.title}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 font-medium">
-                      {deptName}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600">
-                        {doc.docType === 'plan_book' ? 'เล่มแผนปฏิบัติการ' : doc.docType === 'folder' ? 'โฟลเดอร์ฝ่าย' : 'เอกสาร PDF'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500">
-                      {doc.updatedAt || '-'}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <a
-                        href={doc.gdriveUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center space-x-1 text-sky-600 hover:text-sky-800 font-semibold"
-                      >
-                        <span>เปิด Drive</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </td>
-                    {isAdmin && (
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center space-x-1">
-                          <button
-                            onClick={() => {
-                              setEditingDoc(doc);
-                              setShowModal(true);
-                            }}
-                            className="p-1 text-slate-400 hover:text-sky-600 rounded"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(doc.id, doc.title)}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                  return (
+                    <tr key={doc.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4 text-sky-600 flex-shrink-0" />
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{doc.title}</span>
                         </div>
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">
+                        {deptName}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          {doc.docType === 'plan_book' ? 'เล่มแผนปฏิบัติการ' : doc.docType === 'folder' ? 'โฟลเดอร์ฝ่าย' : 'เอกสาร PDF'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 dark:text-slate-400">
+                        {doc.updatedAt || '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <a
+                          href={doc.gdriveUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center space-x-1 text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 font-semibold"
+                        >
+                          <span>เปิด Drive</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </td>
+                      {isAdmin && (
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center space-x-1">
+                            <button
+                              onClick={() => {
+                                setEditingDoc(doc);
+                                setShowModal(true);
+                              }}
+                              className="p-1 text-slate-400 hover:text-sky-600 rounded"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(doc.id, doc.title)}
+                              className="p-1 text-slate-400 hover:text-rose-600 rounded"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Modal */}

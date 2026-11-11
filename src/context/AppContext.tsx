@@ -19,6 +19,7 @@ interface AppContextType {
   saveActivity: (activity: Activity) => Promise<void>;
   deleteActivity: (id: string) => Promise<void>;
   addProject: (project: Project) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
   recordExpense: (activityId: string, expense: ExpenseItem) => Promise<void>;
   saveReport: (report: ActivityReport) => Promise<void>;
   deleteReport: (id: string) => Promise<void>;
@@ -26,6 +27,7 @@ interface AppContextType {
   deleteDocument: (id: string) => Promise<void>;
   resetDatabase: () => Promise<void>;
   refreshData: () => Promise<void>;
+  syncGoogleSheets: () => Promise<{ success: boolean; message: string; totalInSheet?: number; addedCount?: number; updatedCount?: number }>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -97,6 +99,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const saveActivity = async (activity: Activity) => {
+    // Optimistic UI update
+    setDb(prev => {
+      const exists = prev.activities.some(a => a.id === activity.id);
+      return {
+        ...prev,
+        activities: exists
+          ? prev.activities.map(a => a.id === activity.id ? activity : a)
+          : [activity, ...prev.activities]
+      };
+    });
+
     try {
       const res = await fetch('/api/data', {
         method: 'POST',
@@ -106,10 +119,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) await fetchData();
     } catch (e) {
       console.error(e);
+      await fetchData();
     }
   };
 
   const deleteActivity = async (id: string) => {
+    // Optimistic UI update
+    setDb(prev => ({
+      ...prev,
+      activities: prev.activities.filter(a => a.id !== id)
+    }));
+
     try {
       const res = await fetch('/api/data', {
         method: 'POST',
@@ -119,10 +139,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) await fetchData();
     } catch (e) {
       console.error(e);
+      await fetchData();
     }
   };
 
   const addProject = async (project: Project) => {
+    // Optimistic UI update
+    setDb(prev => {
+      const exists = (prev.projects || []).some(p => p.id === project.id);
+      return {
+        ...prev,
+        projects: exists
+          ? prev.projects.map(p => p.id === project.id ? project : p)
+          : [...(prev.projects || []), project]
+      };
+    });
+
     try {
       const res = await fetch('/api/data', {
         method: 'POST',
@@ -132,6 +164,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) await fetchData();
     } catch (e) {
       console.error(e);
+      await fetchData();
+    }
+  };
+
+  const deleteProject = async (id: string) => {
+    // Optimistic UI update
+    setDb(prev => ({
+      ...prev,
+      projects: (prev.projects || []).filter(p => p.id !== id)
+    }));
+
+    try {
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_PROJECT', payload: { id } })
+      });
+      if (res.ok) await fetchData();
+    } catch (e) {
+      console.error(e);
+      await fetchData();
     }
   };
 
@@ -213,6 +266,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const syncGoogleSheets = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch('/api/sync/sheet');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        await fetchData();
+        return {
+          success: true,
+          message: `ซิงค์สำเร็จ! ดึงข้อมูล ${data.totalInSheet} กิจกรรมจาก Google Sheets เรียบร้อยแล้ว (อัปเดต ${data.updatedCount} กิจกรรม, เพิ่มใหม่ ${data.addedCount} กิจกรรม)`,
+          totalInSheet: data.totalInSheet,
+          addedCount: data.addedCount,
+          updatedCount: data.updatedCount
+        };
+      } else {
+        return { success: false, message: data.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets' };
+      }
+    } catch (err: any) {
+      return { success: false, message: err.message || 'เชื่อมต่อ Google Sheets ไม่สำเร็จ' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredActivities = (db.activities || []).filter(a => a.fiscalYear === currentYear);
   const filteredProjects = (db.projects || []).filter(p => p.fiscalYear === currentYear);
   const filteredReports = (db.reports || []).filter(r => r.fiscalYear === currentYear);
@@ -235,13 +312,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         saveActivity,
         deleteActivity,
         addProject,
+        deleteProject,
         recordExpense,
         saveReport,
         deleteReport,
         saveDocument,
         deleteDocument,
         resetDatabase,
-        refreshData: fetchData
+        refreshData: fetchData,
+        syncGoogleSheets
       }}
     >
       {children}

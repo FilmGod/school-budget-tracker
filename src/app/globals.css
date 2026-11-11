@@ -8,11 +8,167 @@
   --font-sarabun: 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+html {
+  font-size: 19.2px; /* 16px * 1.2 = เพิ่มขนาดตัวหนังสือทั้งเว็บ 20% */
+}
+
 body {
   font-family: var(--font-sarabun);
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ========================================================= */
+/* Fluid Micro-Interactions & Snappy Animation Performance   */
+/* ========================================================= */
+@keyframes pageSlideEnter {
+  0% {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-page-slide {
+  animation: pageSlideEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+/* Backward compatibility */
+.animate-page-enter {
+  animation: pageSlideEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+/* Checkmark Drawing & Success Spring Motion */
+@keyframes checkmarkCircle {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes checkmarkStroke {
+  0% {
+    stroke-dashoffset: 48;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-checkmark-circle {
+  animation: checkmarkCircle 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-checkmark-stroke {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: checkmarkStroke 0.42s 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Animated Crossmark Drawing */
+@keyframes crossStroke {
+  0% {
+    stroke-dashoffset: 28;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-cross-stroke-1 {
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  animation: crossStroke 0.28s 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-cross-stroke-2 {
+  stroke-dasharray: 28;
+  stroke-dashoffset: 28;
+  animation: crossStroke 0.28s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Reduced Motion Mode for User Preferences */
+.reduced-motion *,
+.reduced-motion .animate-page-slide,
+.reduced-motion .animate-page-enter,
+.reduced-motion .animate-shimmer,
+.reduced-motion .animate-ping,
+.reduced-motion .hover-card {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 2.2s infinite ease-in-out;
+}
+
+.hover-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+.active-press {
+  transition: transform 0.12s ease;
+}
+
+.active-press:active {
+  transform: scale(0.97);
+}
+
+/* ========================================================= */
+/* Exact scale for Print & Document Template (ไม่ขยายตามเว็บ) */
+/* ========================================================= */
+.print-page {
+  font-size: 16px; /* คงขนาดเป๊ะตามสเกลราชการ A4 เดิม */
 }
 
 /* ========================================================= */
@@ -25,8 +181,11 @@ body {
   }
 
   html, body {
+    font-size: 16px !important;
     width: 210mm !important;
-    height: 100% !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    min-height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background-color: #ffffff !important;
@@ -34,6 +193,24 @@ body {
     print-color-adjust: exact !important;
     overflow: hidden !important;
     font-family: 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Reset all animation and transform properties in print mode */
+  .animate-page-enter,
+  .animate-page-slide {
+    display: contents !important;
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    will-change: auto !important;
   }
 
   .print\:hidden {
@@ -45,11 +222,11 @@ body {
     visibility: hidden;
   }
 
-  .print-page, .print-page * {
+  .print-page, .print-page *, #print-sheet, #print-sheet * {
     visibility: visible;
   }
 
-  .print-page {
+  .print-page, #print-sheet {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
@@ -69,6 +246,9 @@ body {
     break-after: avoid !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
   }
 
   table {
