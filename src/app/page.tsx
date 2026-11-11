@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { currentYear, filteredActivities, db } = useApp();
+  const { currentYear, filteredActivities, filteredReports, db } = useApp();
   const [barsAnimated, setBarsAnimated] = useState(false);
 
   useEffect(() => {
@@ -107,13 +107,20 @@ export default function DashboardPage() {
     };
   });
 
-  // Activity Progress Data for DashboardCharts (Task 5 & 6)
+  // Activity Progress Data for DashboardCharts (Completed = Reported Activity)
+  const reportedActivityIds = new Set((filteredReports || []).map(r => r.activityId));
+  const reportedActivityNames = new Set(
+    (filteredReports || []).map(r => (r.activityName || '').trim()).filter(Boolean)
+  );
+  const isActivityReported = (a: { id: string; name?: string }) =>
+    reportedActivityIds.has(a.id) || (!!a.name && reportedActivityNames.has(a.name.trim()));
+
   const progressData: ProgressChartItem[] = departmentConfigs.map(dept => {
     const deptActs = filteredActivities.filter(a => a.departmentId === dept.id);
     const total = deptActs.length;
-    const completed = deptActs.filter(a => a.status === 'completed' || (a.allocatedAmount > 0 && (a.remainingAmount || 0) <= 0)).length;
-    const inProgress = deptActs.filter(a => a.status === 'in_progress' || ((a.usedAmount || 0) > 0 && (a.remainingAmount || 0) > 0)).length;
-    const pending = total - completed - inProgress;
+    const completed = deptActs.filter(a => isActivityReported(a)).length;
+    const inProgress = deptActs.filter(a => !isActivityReported(a) && ((a.usedAmount || 0) > 0 || (a.expenses && a.expenses.length > 0))).length;
+    const pending = Math.max(0, total - completed - inProgress);
     const percent = total > 0 ? Math.round(((completed + inProgress * 0.5) / total) * 100) : 0;
 
     return {
@@ -122,7 +129,7 @@ export default function DashboardPage() {
       total,
       completed,
       inProgress,
-      pending: Math.max(0, pending),
+      pending,
       percent
     };
   });

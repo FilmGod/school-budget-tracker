@@ -174,7 +174,19 @@ export async function POST(req: NextRequest) {
         const { error } = await supabase.from('reports').upsert({ id: payload.id, data: payload });
         if (error) {
           console.error('Supabase SAVE_REPORT error:', error);
-          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        try {
+          const ldb = getLocalDB();
+          if (!ldb.reports) ldb.reports = [];
+          const existingIdx = ldb.reports.findIndex(r => r.id === payload.id);
+          if (existingIdx >= 0) {
+            ldb.reports[existingIdx] = payload;
+          } else {
+            ldb.reports.push(payload);
+          }
+          saveLocalDB(ldb);
+        } catch (e) {
+          console.error('Error saving report to local DB:', e);
         }
         return NextResponse.json({ success: true, data: payload });
       }
@@ -183,7 +195,13 @@ export async function POST(req: NextRequest) {
         const { error } = await supabase.from('reports').delete().eq('id', payload.id);
         if (error) {
           console.error('Supabase DELETE_REPORT error:', error);
-          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        try {
+          const ldb = getLocalDB();
+          ldb.reports = (ldb.reports || []).filter(r => r.id !== payload.id);
+          saveLocalDB(ldb);
+        } catch (e) {
+          console.error('Error deleting report from local DB:', e);
         }
         return NextResponse.json({ success: true, data: { id: payload.id } });
       }
