@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { Activity, Project } from '@/lib/types';
+import {
+  GOOGLE_SHEETS_WEBAPP_URL,
+  readMasterSheetViaCli,
+  readSubSheetExpensesViaCli,
+  syncActivityExpensesToSheet
+} from '@/lib/sheetSync';
 
 export const dynamic = 'force-dynamic';
-
-const GOOGLE_SHEETS_WEBAPP_URL = 
-  process.env.GOOGLE_SHEETS_WEBAPP_URL || 
-  'https://script.google.com/macros/s/AKfycbxW9TOBSNRG4Mh_6dT79LVWr1qCYIkpHx5tSYyR0hSgZfj-W2k_mkOpCa9_Pq5bKkxY/exec';
 
 function mapDepartment(deptName: string): { id: string; name: string } {
   const clean = deptName || '';
@@ -36,32 +38,57 @@ export async function POST(req: NextRequest) {
 
 async function handleSync() {
   try {
-    // 1. Fetch raw activities from Google Sheets Web App
-    const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store',
-      redirect: 'follow'
-    });
+    // 1. Try reading master sheet via gsheets CLI first (includes live usedAmount from Col J)
+    let sheetActivities: any[] | null = await readMasterSheetViaCli();
 
-    if (!res.ok) {
+    // 2. Also fetch from Google Sheets Web App (or use as primary if CLI not available)
+    try {
+      const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
+        redirect: 'follow'
+      });
+
+      if (res.ok) {
+        const sheetData = await res.json();
+        if (sheetData && Array.isArray(sheetData.activities)) {
+          if (!sheetActivities) {
+            sheetActivities = sheetData.activities;
+          } else {
+            // Merge any extra fields (such as expenses if WebApp returns them)
+            for (const waItem of sheetData.activities) {
+              const match = sheetActivities.find(
+                (s) =>
+                  (waItem.sheetCode && s.sheetCode === String(waItem.sheetCode).trim()) ||
+                  (waItem.name && s.name === String(waItem.name).trim())
+              );
+              if (match) {
+                if (typeof waItem.usedAmount === 'number' && !match.usedAmount) {
+                  match.usedAmount = waItem.usedAmount;
+                }
+                if (Array.isArray(waItem.expenses) && waItem.expenses.length > 0) {
+                  match.expenses = waItem.expenses;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (!sheetActivities) {
+        throw e;
+      }
+    }
+
+    if (!sheetActivities || !Array.isArray(sheetActivities)) {
       return NextResponse.json(
-        { error: `Google Sheets responded with status ${res.status}` },
+        { error: 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้' },
         { status: 502 }
       );
     }
 
-    const sheetData = await res.json();
-    if (!sheetData || !sheetData.activities || !Array.isArray(sheetData.activities)) {
-      return NextResponse.json(
-        { error: 'Invalid data format from Google Sheets Web App' },
-        { status: 502 }
-      );
-    }
-
-    const sheetActivities = sheetData.activities;
-
-    // 2. Load current database state from Supabase
+    // 3. Load current database state from Supabase
     const [actRes, projRes] = await Promise.all([
       supabase.from('activities').select('data'),
       supabase.from('projects').select('data')
@@ -73,9 +100,9 @@ async function handleSync() {
     let addedCount = 0;
     let updatedCount = 0;
     const projectMap = new Map<string, Project>();
-    currentProjects.forEach(p => projectMap.set(p.name, p));
+    currentProjects.forEach((p) => projectMap.set(p.name, p));
 
-    // 3. Process each activity from Google Sheets
+    // 4. Process each activity (Two-Way Sync)
     for (const item of sheetActivities) {
       if (!item.name || item.name.trim() === '' || item.name === '-') continue;
 
@@ -83,6 +110,7 @@ async function handleSync() {
       const budgetType = mapBudgetType(item.budgetType);
       const allocatedAmount = typeof item.allocatedAmount === 'number' ? item.allocatedAmount : 0;
       const projectName = item.project && item.project.trim() ? item.project.trim() : 'โครงการทั่วไป';
+      const cleanSheetCode = (item.sheetCode || '').toString().trim();
 
       // Ensure project exists
       let project: Project | undefined = projectMap.get(projectName);
@@ -102,23 +130,59 @@ async function handleSync() {
 
       const activeProject: Project = project;
 
-      // Check if activity already exists in database (by sheetCode or by exact name)
-      const existing = currentActivities.find(a => 
-        (item.sheetCode && a.sheetCode && a.sheetCode.trim() === item.sheetCode.trim()) ||
-        a.name.trim() === item.name.trim()
+      const existing = currentActivities.find(
+        (a) =>
+          (cleanSheetCode && a.sheetCode && a.sheetCode.trim() === cleanSheetCode) ||
+          a.name.trim() === item.name.trim()
       );
 
       if (existing) {
-        // Update existing activity, preserving transactions & expenses
-        const used = existing.usedAmount || 0;
+        let expenses = existing.expenses ? [...existing.expenses] : [];
+        let used = existing.usedAmount || 0;
+        const sheetUsed = typeof item.usedAmount === 'number' ? item.usedAmount : null;
+
+        // Two-way expense sync logic:
+        if (Array.isArray(item.expenses) && item.expenses.length > 0) {
+          // WebApp provided sub-sheet expenses directly
+          expenses = item.expenses;
+          used = expenses.reduce((sum: number, e: any) => sum + (e.amount || 0) - (e.refund || 0), 0);
+        } else if (sheetUsed !== null && sheetUsed !== used && cleanSheetCode) {
+          // Discrepancy between Web and Google Sheet
+          const cliExpenses = await readSubSheetExpensesViaCli(cleanSheetCode);
+          if (cliExpenses !== null) {
+            const cliUsed = cliExpenses.reduce((s, e) => s + (e.amount || 0) - (e.refund || 0), 0);
+            if (cliExpenses.length > 0 && (expenses.length === 0 || cliUsed === sheetUsed)) {
+              // Sheet has updated expenses -> pull to Web
+              expenses = cliExpenses;
+              used = cliUsed;
+            } else if (expenses.length > 0 && cliExpenses.length === 0) {
+              // Web has expenses that are not yet in Sheet -> push to Sheet
+              await syncActivityExpensesToSheet(existing);
+            }
+          }
+        } else if (expenses.length > 0 && cleanSheetCode) {
+          // Ensure Web expenses are pushed to Google Sheets WebApp
+          fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'SYNC_EXPENSES',
+              sheetCode: cleanSheetCode,
+              activityId: existing.id,
+              activityName: existing.name,
+              expenses
+            })
+          }).catch(() => {});
+        }
+
         const remaining = Math.max(0, allocatedAmount - used);
-        const status: 'approved' | 'completed' | 'in_progress' | 'pending' = 
+        const status: 'approved' | 'completed' | 'in_progress' | 'pending' =
           remaining <= 0 && allocatedAmount > 0 ? 'completed' : used > 0 ? 'in_progress' : 'approved';
 
         const updatedActivity: Activity = {
           ...existing,
           name: item.name.trim(),
-          sheetCode: item.sheetCode || existing.sheetCode,
+          sheetCode: cleanSheetCode || existing.sheetCode,
           seq: item.seq ? String(item.seq) : existing.seq,
           projectId: activeProject.id,
           projectName: activeProject.name,
@@ -129,13 +193,28 @@ async function handleSync() {
           usedAmount: used,
           remainingAmount: remaining,
           status: status,
-          responsiblePerson: item.responsible || existing.responsiblePerson || ''
+          responsiblePerson: item.responsible || existing.responsiblePerson || '',
+          expenses
         };
 
         await supabase.from('activities').upsert({ id: updatedActivity.id, data: updatedActivity });
         updatedCount++;
       } else {
-        // Create new activity added from Google Sheets
+        let expenses = Array.isArray(item.expenses) ? item.expenses : [];
+        let used = typeof item.usedAmount === 'number' ? item.usedAmount : 0;
+
+        if (used > 0 && expenses.length === 0 && cleanSheetCode) {
+          const cliExpenses = await readSubSheetExpensesViaCli(cleanSheetCode);
+          if (cliExpenses && cliExpenses.length > 0) {
+            expenses = cliExpenses;
+            used = expenses.reduce((s: number, e: any) => s + (e.amount || 0) - (e.refund || 0), 0);
+          }
+        }
+
+        const remaining = Math.max(0, allocatedAmount - used);
+        const status: 'approved' | 'completed' | 'in_progress' | 'pending' =
+          remaining <= 0 && allocatedAmount > 0 ? 'completed' : used > 0 ? 'in_progress' : 'approved';
+
         const newActId = `act_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
         const newActivity: Activity = {
           id: newActId,
@@ -145,15 +224,15 @@ async function handleSync() {
           departmentId: dept.id,
           departmentName: dept.name,
           name: item.name.trim(),
-          sheetCode: item.sheetCode || '',
+          sheetCode: cleanSheetCode,
           seq: item.seq ? String(item.seq) : String(currentActivities.length + addedCount + 1),
           budgetType: budgetType,
           allocatedAmount: allocatedAmount,
-          usedAmount: 0,
-          remainingAmount: allocatedAmount,
-          status: 'approved',
+          usedAmount: used,
+          remainingAmount: remaining,
+          status: status,
           responsiblePerson: item.responsible || '',
-          expenses: []
+          expenses
         };
 
         await supabase.from('activities').upsert({ id: newActivity.id, data: newActivity });
@@ -163,13 +242,12 @@ async function handleSync() {
 
     return NextResponse.json({
       success: true,
-      message: `ซิงค์ข้อมูลจาก Google Sheets สำเร็จ`,
+      message: `ซิงค์ข้อมูลสองทางกับ Google Sheets สำเร็จ (อัปเดต ${updatedCount} รายการ, เพิ่มใหม่ ${addedCount} รายการ)`,
       totalInSheet: sheetActivities.length,
       updatedCount,
       addedCount,
       timestamp: new Date().toISOString()
     });
-
   } catch (err: any) {
     console.error('Error in /api/sync/sheet:', err);
     return NextResponse.json(

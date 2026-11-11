@@ -21,6 +21,8 @@ interface AppContextType {
   addProject: (project: Project) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   recordExpense: (activityId: string, expense: ExpenseItem) => Promise<void>;
+  updateExpense: (activityId: string, expense: ExpenseItem) => Promise<void>;
+  deleteExpense: (activityId: string, expenseId: string) => Promise<void>;
   saveReport: (report: ActivityReport) => Promise<void>;
   deleteReport: (id: string) => Promise<void>;
   saveDocument: (doc: ProjectDocument) => Promise<void>;
@@ -201,6 +203,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateExpense = async (activityId: string, expense: ExpenseItem) => {
+    try {
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'UPDATE_EXPENSE', payload: { activityId, expense } })
+      });
+      if (res.ok) await fetchData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteExpense = async (activityId: string, expenseId: string) => {
+    try {
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_EXPENSE', payload: { activityId, expenseId } })
+      });
+      if (res.ok) await fetchData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const saveReport = async (report: ActivityReport) => {
     try {
       const res = await fetch('/api/data', {
@@ -314,6 +342,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addProject,
         deleteProject,
         recordExpense,
+        updateExpense,
+        deleteExpense,
         saveReport,
         deleteReport,
         saveDocument,

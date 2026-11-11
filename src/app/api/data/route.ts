@@ -4,6 +4,7 @@ import path from 'path';
 import initialData from '@/data/initialData.json';
 import { DatabaseSchema, Activity, ActivityReport, FiscalYear, Project, ProjectDocument } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { syncActivityExpensesToSheet } from '@/lib/sheetSync';
 
 export const dynamic = 'force-dynamic';
 
@@ -153,18 +154,104 @@ export async function POST(req: NextRequest) {
 
       case 'RECORD_EXPENSE': {
         const { activityId, expense } = payload;
-        // Fetch current activity from Supabase
         const { data: actRow } = await supabase.from('activities').select('data').eq('id', activityId).single();
         let act: Activity | null = actRow ? actRow.data : null;
+
+        if (!act) {
+          const ldb = getLocalDB();
+          act = (ldb.activities || []).find(a => a.id === activityId) || null;
+        }
 
         if (act) {
           if (!act.expenses) act.expenses = [];
           act.expenses.push(expense);
+          act.expenses = act.expenses.map((e, idx) => ({ ...e, index: idx + 1 }));
           act.usedAmount = act.expenses.reduce((sum, e) => sum + (e.amount || 0) - (e.refund || 0), 0);
           act.remainingAmount = act.allocatedAmount - act.usedAmount;
-          act.status = act.remainingAmount <= 0 ? 'completed' : 'in_progress';
+          act.status = act.remainingAmount <= 0 && act.allocatedAmount > 0 ? 'completed' : act.usedAmount > 0 ? 'in_progress' : 'approved';
 
           await supabase.from('activities').upsert({ id: act.id, data: act });
+          try {
+            const ldb = getLocalDB();
+            const existingIdx = (ldb.activities || []).findIndex(a => a.id === act!.id);
+            if (existingIdx >= 0) ldb.activities[existingIdx] = act;
+            saveLocalDB(ldb);
+          } catch {}
+
+          // Sync to Google Sheets (both WebApp & CLI)
+          syncActivityExpensesToSheet(act).catch(err => console.error('Sheet sync error:', err));
+
+          return NextResponse.json({ success: true, data: act });
+        }
+        return NextResponse.json({ error: 'Activity not found' }, { status: 404 });
+      }
+
+      case 'UPDATE_EXPENSE': {
+        const { activityId, expense } = payload;
+        const { data: actRow } = await supabase.from('activities').select('data').eq('id', activityId).single();
+        let act: Activity | null = actRow ? actRow.data : null;
+
+        if (!act) {
+          const ldb = getLocalDB();
+          act = (ldb.activities || []).find(a => a.id === activityId) || null;
+        }
+
+        if (act) {
+          if (!act.expenses) act.expenses = [];
+          const idx = act.expenses.findIndex(e => e.id === expense.id || (expense.index && e.index === expense.index));
+          if (idx >= 0) {
+            act.expenses[idx] = { ...act.expenses[idx], ...expense };
+          } else if (act.expenses.length > 0) {
+            act.expenses[0] = { ...act.expenses[0], ...expense };
+          } else {
+            act.expenses.push(expense);
+          }
+          act.expenses = act.expenses.map((e, i) => ({ ...e, index: i + 1 }));
+          act.usedAmount = act.expenses.reduce((sum, e) => sum + (e.amount || 0) - (e.refund || 0), 0);
+          act.remainingAmount = act.allocatedAmount - act.usedAmount;
+          act.status = act.remainingAmount <= 0 && act.allocatedAmount > 0 ? 'completed' : act.usedAmount > 0 ? 'in_progress' : 'approved';
+
+          await supabase.from('activities').upsert({ id: act.id, data: act });
+          try {
+            const ldb = getLocalDB();
+            const existingIdx = (ldb.activities || []).findIndex(a => a.id === act!.id);
+            if (existingIdx >= 0) ldb.activities[existingIdx] = act;
+            saveLocalDB(ldb);
+          } catch {}
+
+          syncActivityExpensesToSheet(act).catch(err => console.error('Sheet sync error:', err));
+
+          return NextResponse.json({ success: true, data: act });
+        }
+        return NextResponse.json({ error: 'Activity not found' }, { status: 404 });
+      }
+
+      case 'DELETE_EXPENSE': {
+        const { activityId, expenseId } = payload;
+        const { data: actRow } = await supabase.from('activities').select('data').eq('id', activityId).single();
+        let act: Activity | null = actRow ? actRow.data : null;
+
+        if (!act) {
+          const ldb = getLocalDB();
+          act = (ldb.activities || []).find(a => a.id === activityId) || null;
+        }
+
+        if (act) {
+          act.expenses = (act.expenses || []).filter(e => e.id !== expenseId).map((e, i) => ({ ...e, index: i + 1 }));
+          act.usedAmount = act.expenses.reduce((sum, e) => sum + (e.amount || 0) - (e.refund || 0), 0);
+          act.remainingAmount = act.allocatedAmount - act.usedAmount;
+          act.status = act.remainingAmount <= 0 && act.allocatedAmount > 0 ? 'completed' : act.usedAmount > 0 ? 'in_progress' : 'approved';
+
+          await supabase.from('activities').upsert({ id: act.id, data: act });
+          try {
+            const ldb = getLocalDB();
+            const existingIdx = (ldb.activities || []).findIndex(a => a.id === act!.id);
+            if (existingIdx >= 0) ldb.activities[existingIdx] = act;
+            saveLocalDB(ldb);
+          } catch {}
+
+          syncActivityExpensesToSheet(act).catch(err => console.error('Sheet sync error:', err));
+
           return NextResponse.json({ success: true, data: act });
         }
         return NextResponse.json({ error: 'Activity not found' }, { status: 404 });

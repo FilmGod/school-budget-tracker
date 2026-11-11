@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Activity } from '@/lib/types';
@@ -60,11 +61,25 @@ function ProjectsContent() {
 
   // Modals state
   const [expenseActivity, setExpenseActivity] = useState<Activity | null>(null);
+  const [expenseInitialMode, setExpenseInitialMode] = useState<'add' | 'edit'>('add');
+  const [expenseInitialIndex, setExpenseInitialIndex] = useState<number>(0);
+  const [confirmEditActivity, setConfirmEditActivity] = useState<Activity | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [showAddActivityModal, setShowAddActivityModal] = useState<boolean>(false);
   const [showAddProjectModal, setShowAddProjectModal] = useState<boolean>(false);
   const [quickAddProjectId, setQuickAddProjectId] = useState<string | null>(null);
   const [quickAddDeptId, setQuickAddDeptId] = useState<string | null>(null);
+
+  const handleExpenseButtonClick = (act: Activity) => {
+    const isDisbursed = (act.expenses && act.expenses.length > 0) || (act.usedAmount || 0) > 0;
+    if (isDisbursed) {
+      setConfirmEditActivity(act);
+    } else {
+      setExpenseInitialMode('add');
+      setExpenseInitialIndex(0);
+      setExpenseActivity(act);
+    }
+  };
 
   const handleSyncFromSheet = async () => {
     setIsSyncing(true);
@@ -558,12 +573,27 @@ function ProjectsContent() {
                                 </div>
 
                                 <div className="flex items-center space-x-1.5 ml-2">
-                                  <button
-                                    onClick={() => setExpenseActivity(act)}
-                                    className="active-press px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[11px] font-bold shadow-2xs"
-                                  >
-                                    เบิกจ่าย
-                                  </button>
+                                  {(() => {
+                                    const actDisbursed = (act.expenses && act.expenses.length > 0) || (act.usedAmount || 0) > 0;
+                                    return (
+                                      <button
+                                        onClick={() => handleExpenseButtonClick(act)}
+                                        className={`active-press px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center space-x-1 border transition-colors ${
+                                          actDisbursed
+                                            ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                                            : 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                                        }`}
+                                        title={actDisbursed ? 'เบิกจ่ายแล้ว (คลิกเพื่อแก้ไขข้อมูลการเบิกจ่าย)' : 'บันทึกการเบิกจ่ายเงิน'}
+                                      >
+                                        {actDisbursed ? (
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                        ) : (
+                                          <Receipt className="w-3.5 h-3.5" />
+                                        )}
+                                        <span>{actDisbursed ? 'เบิกจ่ายแล้ว' : 'เบิกจ่าย'}</span>
+                                      </button>
+                                    );
+                                  })()}
                                   {isAdmin && (
                                     <>
                                       <button
@@ -698,17 +728,25 @@ function ProjectsContent() {
 
                       {/* Action buttons */}
                       <div className="flex items-center space-x-1.5">
-                        {/* Record Expense Button (Admin only) */}
-                        {isAdmin && (
-                          <button
-                            onClick={() => setExpenseActivity(activity)}
-                            className="active-press px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors"
-                            title="บันทึกการเบิกจ่ายเงิน"
-                          >
+                        {/* Record / Edit Expense Button */}
+                        <button
+                          onClick={() => handleExpenseButtonClick(activity)}
+                          className={`active-press px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 border transition-colors ${
+                            hasExpenses || isDisbursed
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                              : 'bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                          }`}
+                          title={hasExpenses || isDisbursed ? 'เบิกจ่ายแล้ว (คลิกเพื่อแก้ไขข้อมูลการเบิกจ่าย)' : 'บันทึกการเบิกจ่ายเงิน'}
+                        >
+                          {hasExpenses || isDisbursed ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          ) : (
                             <Receipt className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">เบิกจ่าย</span>
-                          </button>
-                        )}
+                          )}
+                          <span className="hidden sm:inline">
+                            {hasExpenses || isDisbursed ? 'เบิกจ่ายแล้ว' : 'เบิกจ่าย'}
+                          </span>
+                        </button>
 
                         {/* Edit & Delete (Admin only) */}
                         {isAdmin && (
@@ -763,15 +801,17 @@ function ProjectsContent() {
                           <Receipt className="w-4 h-4 text-sky-600" />
                           <span>ประวัติรายการขออนุมัติและเบิกจ่ายงบประมาณ</span>
                         </span>
-                        {isAdmin && (
-                          <button
-                            onClick={() => setExpenseActivity(activity)}
-                            className="active-press text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center space-x-1"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>เพิ่มรายการเบิกจ่าย</span>
-                          </button>
-                        )}
+                        <button
+                          onClick={() => {
+                            setExpenseInitialMode('add');
+                            setExpenseInitialIndex(0);
+                            setExpenseActivity(activity);
+                          }}
+                          className="active-press text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center space-x-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>เพิ่มรายการเบิกจ่าย</span>
+                        </button>
                       </div>
 
                       {hasExpenses ? (
@@ -784,7 +824,8 @@ function ProjectsContent() {
                                 <th className="py-2.5 px-3">รายละเอียดการใช้จ่าย</th>
                                 <th className="py-2.5 px-3 text-right w-28">งบที่ใช้ (บาท)</th>
                                 <th className="py-2.5 px-3 text-right w-24">คืนเงิน (บาท)</th>
-                                <th className="py-2.5 px-3 w-36">หมายเหตุ</th>
+                                <th className="py-2.5 px-3 w-32">หมายเหตุ</th>
+                                <th className="py-2.5 px-3 w-16 text-center">จัดการ</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -808,6 +849,20 @@ function ProjectsContent() {
                                   <td className="py-2.5 px-3 text-slate-500 text-[11px]">
                                     {exp.note || '-'}
                                   </td>
+                                  <td className="py-2 px-3 text-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setExpenseInitialMode('edit');
+                                        setExpenseInitialIndex(idx);
+                                        setExpenseActivity(activity);
+                                      }}
+                                      className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                                      title="แก้ไขรายการเบิกจ่ายนี้"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
@@ -828,10 +883,67 @@ function ProjectsContent() {
       </div>
       )}
 
+      {/* Confirmation Modal for Editing Existing Expense */}
+      {confirmEditActivity && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-[1px] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setConfirmEditActivity(null);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-[#1e293b] rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-800 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                ต้องการแก้ไขข้อมูลการเบิกจ่ายใช่หรือไม่?
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                กิจกรรม: <span className="font-semibold text-slate-700 dark:text-slate-200">{confirmEditActivity.name}</span>
+              </p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
+                ยอดเบิกจ่ายปัจจุบัน: {confirmEditActivity.usedAmount.toLocaleString()} บาท
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmEditActivity(null)}
+                className="active-press flex-1 px-4 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition-colors"
+              >
+                ไม่ใช่
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetAct = confirmEditActivity;
+                  setConfirmEditActivity(null);
+                  setExpenseInitialMode('edit');
+                  setExpenseInitialIndex(0);
+                  setExpenseActivity(targetAct);
+                }}
+                className="active-press flex-1 px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-colors"
+              >
+                ใช่
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Modals */}
       {expenseActivity && (
         <ExpenseModal
           activity={expenseActivity}
+          initialMode={expenseInitialMode}
+          initialExpenseIndex={expenseInitialIndex}
           onClose={() => setExpenseActivity(null)}
         />
       )}
