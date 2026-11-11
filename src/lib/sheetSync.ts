@@ -12,7 +12,7 @@ export const SPREADSHEET_ID =
 
 export const GOOGLE_SHEETS_WEBAPP_URL =
   process.env.GOOGLE_SHEETS_WEBAPP_URL ||
-  'https://script.google.com/macros/s/AKfycbxW9TOBSNRG4Mh_6dT79LVWr1qCYIkpHx5tSYyR0hSgZfj-W2k_mkOpCa9_Pq5bKkxY/exec';
+  'https://script.google.com/macros/s/AKfycbxxHfyieKHtKoodbDXICORzRVouX_R-PMpRONR0-VFIarBA61OIdlPobtslF5NBobGW/exec';
 
 function parseNum(val: any): number {
   if (typeof val === 'number') return val;

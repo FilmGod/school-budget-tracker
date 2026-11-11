@@ -4,7 +4,7 @@ import path from 'path';
 import initialData from '@/data/initialData.json';
 import { DatabaseSchema, Activity, ActivityReport, FiscalYear, Project, ProjectDocument } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import { syncActivityExpensesToSheet } from '@/lib/sheetSync';
+import { GOOGLE_SHEETS_WEBAPP_URL, syncActivityExpensesToSheet } from '@/lib/sheetSync';
 
 export const dynamic = 'force-dynamic';
 
@@ -129,10 +129,9 @@ export async function POST(req: NextRequest) {
         }
 
         // Forward to Google Sheets Web App if configured
-        const webappUrl = process.env.GOOGLE_SHEETS_WEBAPP_URL;
-        if (webappUrl) {
+        if (GOOGLE_SHEETS_WEBAPP_URL) {
           try {
-            await fetch(webappUrl, {
+            await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'ADD_ACTIVITY', data: payload }),

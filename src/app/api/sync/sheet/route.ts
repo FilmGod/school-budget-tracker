@@ -105,6 +105,7 @@ async function handleSync() {
     const projectsToUpsert: { id: string; data: Project }[] = [];
     const activitiesToUpsert: { id: string; data: Activity }[] = [];
     const pushToSheetPromises: Promise<boolean>[] = [];
+    const processedActivityIds = new Set<string>();
 
     // 4. Process each activity (Two-Way Sync)
     for (const item of sheetActivities) {
@@ -134,13 +135,14 @@ async function handleSync() {
 
       const activeProject: Project = project;
 
-      const existing = currentActivities.find(
-        (a) =>
-          (cleanSheetCode && a.sheetCode && a.sheetCode.trim() === cleanSheetCode) ||
-          a.name.trim() === item.name.trim()
-      );
+      const existing =
+        currentActivities.find((a) => cleanSheetCode && a.sheetCode && a.sheetCode.trim() === cleanSheetCode) ||
+        currentActivities.find((a) => a.name.trim() === item.name.trim());
 
       if (existing) {
+        if (processedActivityIds.has(existing.id)) continue;
+        processedActivityIds.add(existing.id);
+
         let expenses = existing.expenses ? [...existing.expenses] : [];
         let used = existing.usedAmount || 0;
         const sheetUsed = typeof item.usedAmount === 'number' ? item.usedAmount : null;
