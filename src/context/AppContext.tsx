@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { DatabaseSchema, Activity, Project, ActivityReport, ProjectDocument, FiscalYear, ExpenseItem } from '@/lib/types';
+import { sortActivities, sortProjects } from '@/lib/sortOrder';
 import initialData from '@/data/initialData.json';
 
 interface AppContextType {
@@ -318,8 +319,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const filteredActivities = (db.activities || []).filter(a => a.fiscalYear === currentYear);
-  const filteredProjects = (db.projects || []).filter(p => p.fiscalYear === currentYear);
+  const filteredProjects = useMemo(
+    () => sortProjects((db.projects || []).filter(p => p.fiscalYear === currentYear)),
+    [db.projects, currentYear]
+  );
+  const filteredActivities = useMemo(
+    () => sortActivities((db.activities || []).filter(a => a.fiscalYear === currentYear), filteredProjects),
+    [db.activities, currentYear, filteredProjects]
+  );
   const filteredReports = (db.reports || []).filter(r => r.fiscalYear === currentYear);
   const filteredDocuments = (db.documents || []).filter(d => d.fiscalYear === currentYear);
 

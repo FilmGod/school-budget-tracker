@@ -5,6 +5,7 @@ import initialData from '@/data/initialData.json';
 import { DatabaseSchema, Activity, ActivityReport, FiscalYear, Project, ProjectDocument } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import { GOOGLE_SHEETS_WEBAPP_URL, syncActivityExpensesToSheet } from '@/lib/sheetSync';
+import { sortActivities, sortProjects } from '@/lib/sortOrder';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,11 +73,16 @@ export async function GET() {
 
     // If Supabase returned data, format it
     if (actRes.data && actRes.data.length > 0) {
+      const projects = sortProjects((projRes.data || []).map((r: any) => r.data as Project));
+      const activities = sortActivities(
+        (actRes.data || []).map((r: any) => r.data as Activity),
+        projects
+      );
       const db: DatabaseSchema = {
         fiscalYears: (fyRes.data || []).map((r: any) => r.data as FiscalYear),
         departments: (deptRes.data || []).map((r: any) => r.data),
-        projects: (projRes.data || []).map((r: any) => r.data as Project),
-        activities: (actRes.data || []).map((r: any) => r.data as Activity),
+        projects,
+        activities,
         reports: (repRes.data || []).map((r: any) => r.data as ActivityReport),
         documents: (docRes.data || []).map((r: any) => r.data as ProjectDocument)
       };
