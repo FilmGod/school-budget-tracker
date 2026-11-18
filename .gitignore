@@ -34,3 +34,6 @@ dev.log
 next-env.d.ts
 
 .vercel
+
+# local verification screenshots
+/shots/

@@ -52,18 +52,18 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="legacy-page space-y-8 stagger">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 text-xs font-semibold rounded-full border border-sky-100 dark:border-sky-900 mb-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-brandSoft text-brand text-xs font-semibold rounded-full mb-2">
             <FolderDown className="w-3.5 h-3.5" />
             <span>คลังรวมไฟล์เอกสารงานแผน ปีงบ {currentYear}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-ink">
             รวมไฟล์เอกสารงานแผน
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-muted mt-1">
             เล่มแผนปฏิบัติการประจำปีและคลังเอกสารทางการเงิน
           </p>
         </div>
@@ -74,7 +74,7 @@ export default function DocumentsPage() {
               setEditingDoc(null);
               setShowModal(true);
             }}
-            className="active-press inline-flex items-center space-x-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+            className="btn-primary"
           >
             <Plus className="w-4 h-4" />
             <span>เพิ่มลิงก์เอกสาร / ไดรฟ์</span>

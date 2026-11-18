@@ -5,6 +5,7 @@ import initialData from '@/data/initialData.json';
 import { DatabaseSchema, Activity, ActivityReport, FiscalYear, Project, ProjectDocument } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 import { GOOGLE_SHEETS_WEBAPP_URL, syncActivityExpensesToSheet } from '@/lib/sheetSync';
+import { getSessionRole, guardRequest } from '@/lib/auth';
 import { sortActivities, sortProjects } from '@/lib/sortOrder';
 
 export const dynamic = 'force-dynamic';
@@ -60,7 +61,10 @@ async function persistAndSyncExpenseActivity(act: Activity): Promise<{ act: Acti
   return { act, sheetSynced };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const denied = await guardRequest(req);
+  if (denied) return denied;
+
   try {
     const [fyRes, deptRes, projRes, actRes, repRes, docRes] = await Promise.all([
       supabase.from('fiscal_years').select('data').order('id'),
@@ -106,10 +110,52 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action, payload } = body;
 
+    // --- authorization -------------------------------------------------
+    const role = await getSessionRole(req);
+    if (!role) {
+      return NextResponse.json(
+        { success: false, error: 'กรุณาเข้าสู่ระบบใหม่' },
+        { status: 401 }
+      );
+    }
+    // ครูทั่วไปทำได้เฉพาะการรายงานผลและบันทึกค่าใช้จ่าย
+    const TEACHER_ACTIONS = new Set(['SAVE_REPORT', 'RECORD_EXPENSE', 'UPDATE_EXPENSE']);
+    if (role !== 'admin' && !TEACHER_ACTIONS.has(action)) {
+      return NextResponse.json(
+        { success: false, error: 'ไม่มีสิทธิ์ดำเนินการนี้ (ต้องเป็นผู้ดูแลระบบ)' },
+        { status: 403 }
+      );
+    }
+    // -------------------------------------------------------------------
+
     switch (action) {
       case 'SET_FULL_DB': {
-        saveLocalDB(payload);
-        return NextResponse.json({ success: true, data: payload });
+        // Write to the local file AND to Supabase, so the two stores never drift
+        const full = payload as DatabaseSchema;
+        saveLocalDB(full);
+
+        const tasks: PromiseLike<unknown>[] = [];
+        for (const fy of full.fiscalYears || []) {
+          tasks.push(supabase.from('fiscal_years').upsert({ id: fy.id, data: fy }));
+        }
+        for (const dept of full.departments || []) {
+          tasks.push(supabase.from('departments').upsert({ id: (dept as any).id, data: dept }));
+        }
+        for (const project of full.projects || []) {
+          tasks.push(supabase.from('projects').upsert({ id: project.id, data: project }));
+        }
+        for (const activity of full.activities || []) {
+          tasks.push(supabase.from('activities').upsert({ id: activity.id, data: activity }));
+        }
+        for (const report of full.reports || []) {
+          tasks.push(supabase.from('reports').upsert({ id: report.id, data: report }));
+        }
+        for (const doc of full.documents || []) {
+          tasks.push(supabase.from('documents').upsert({ id: doc.id, data: doc }));
+        }
+        await Promise.all(tasks);
+
+        return NextResponse.json({ success: true, data: full });
       }
 
       case 'ADD_FISCAL_YEAR': {

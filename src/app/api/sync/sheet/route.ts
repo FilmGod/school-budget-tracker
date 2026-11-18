@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { Activity, Project } from '@/lib/types';
+import { guardRequest } from '@/lib/auth';
 import {
   GOOGLE_SHEETS_WEBAPP_URL,
   readMasterSheetViaCli,
@@ -28,11 +29,15 @@ function mapBudgetType(typeStr: string): string {
   return 'งบอุดหนุน';
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const denied = await guardRequest(req, ['admin']);
+  if (denied) return denied;
   return handleSync();
 }
 
 export async function POST(req: NextRequest) {
+  const denied = await guardRequest(req, ['admin']);
+  if (denied) return denied;
   return handleSync();
 }
 

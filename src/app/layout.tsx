@@ -3,6 +3,7 @@ import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import { PreferencesProvider } from '@/context/PreferencesContext';
 import Navbar from '@/components/Navbar';
+import AppShell from '@/components/AppShell';
 import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
@@ -50,14 +51,16 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-[#f1f5f9] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 antialiased selection:bg-sky-500 selection:text-white transition-colors duration-200 print:bg-white print:text-slate-900 print:m-0 print:p-0">
+      <body className="min-h-screen bg-canvas text-body antialiased selection:bg-brand selection:text-white transition-colors duration-200 print:bg-white print:text-slate-900 print:m-0 print:p-0">
         <PreferencesProvider>
           <AppProvider>
             <Navbar />
-            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col print:p-0 print:m-0 print:max-w-none print:w-full print:contents">
-              {children}
-            </main>
-            <Footer />
+            <AppShell>
+              <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:px-8 print:p-0 print:m-0 print:max-w-none print:w-full print:contents">
+                {children}
+              </main>
+              <Footer />
+            </AppShell>
           </AppProvider>
         </PreferencesProvider>
       </body>

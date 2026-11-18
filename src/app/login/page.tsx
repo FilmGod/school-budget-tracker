@@ -56,7 +56,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1e293b] p-7 sm:p-9 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="card reveal w-full max-w-md mx-auto p-7 sm:p-9">
       {/* School Emblem Logo & Header */}
       <div className="mb-6 flex flex-col items-center text-center">
         {/* School Emblem Logo: Circular & fills the circle completely */}
@@ -89,12 +89,13 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
           {/* Username Field */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label htmlFor="login-username" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
               ชื่อผู้ใช้ (Username) <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <input
+                id="login-username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -109,12 +110,13 @@ function LoginForm() {
 
           {/* Password Field */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label htmlFor="login-password" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
               รหัสผ่าน (Password) <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <input
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -126,6 +128,7 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
                 className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 tabIndex={-1}
               >
@@ -146,7 +149,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-sky-600 hover:bg-sky-700 active-press text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-sky-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-60 cursor-pointer"
+            className="w-full py-3 bg-brand hover:brightness-110 active-press text-white rounded-md text-xs sm:text-sm font-bold transition-all flex items-center justify-center space-x-2 disabled:opacity-60 cursor-pointer"
           >
             {isLoading ? (
               <span className="flex items-center space-x-2">
@@ -164,8 +167,8 @@ function LoginForm() {
       )}
 
       {/* Footer Info */}
-      <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center">
-        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="mt-6 pt-5 border-t border-line text-center">
+        <p className="text-[11px] text-muted">
           สำหรับครูและบุคลากร โรงเรียนบางกล่ำวิทยา รัชมังคลาภิเษก เท่านั้น
         </p>
       </div>
@@ -175,7 +178,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="w-full flex-1 flex flex-col items-center justify-center py-6 sm:py-10 my-auto">
+    <div className="w-full flex-1 flex flex-col items-center justify-center py-6 sm:py-10">
       <Suspense fallback={<div className="text-xs text-slate-500">กำลังโหลด...</div>}>
         <LoginForm />
       </Suspense>

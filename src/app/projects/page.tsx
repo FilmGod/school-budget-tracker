@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Activity } from '@/lib/types';
+import { normalizeBudgetType } from '@/lib/budget';
 import ExpenseModal from '@/components/ExpenseModal';
 import ActivityModal from '@/components/ActivityModal';
 import ProjectModal from '@/components/ProjectModal';
@@ -26,7 +27,8 @@ import {
   Clock, 
   AlertCircle,
   FolderPlus,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 
 function ProjectsContent() {
@@ -104,10 +106,11 @@ function ProjectsContent() {
       if (selectedDept !== 'all' && a.departmentId !== selectedDept) return false;
       // Budget Type filter
       if (selectedType !== 'all') {
-        if (selectedType === 'innovation' && a.budgetType !== 'งบพื้นที่นวัตกรรม') return false;
-        if (selectedType === 'subsidy' && a.budgetType !== 'งบอุดหนุน') return false;
-        if (selectedType === 'dev' && a.budgetType !== 'งบพัฒนาผู้เรียน') return false;
-        if (selectedType === 'other' && (a.budgetType === 'งบอุดหนุน' || a.budgetType === 'งบพัฒนาผู้เรียน' || a.budgetType === 'งบพื้นที่นวัตกรรม')) return false;
+        const type = normalizeBudgetType(a.budgetType);
+        if (selectedType === 'innovation' && type !== 'งบพื้นที่นวัตกรรม') return false;
+        if (selectedType === 'subsidy' && type !== 'งบอุดหนุน') return false;
+        if (selectedType === 'dev' && type !== 'งบพัฒนาผู้เรียน') return false;
+        if (selectedType === 'other' && (type === 'งบอุดหนุน' || type === 'งบพัฒนาผู้เรียน' || type === 'งบพื้นที่นวัตกรรม')) return false;
       }
       // Search term
       if (searchTerm.trim()) {
@@ -172,18 +175,18 @@ function ProjectsContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="legacy-page space-y-6 stagger">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-sky-50 text-sky-700 text-xs font-semibold rounded-full border border-sky-100 mb-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-brandSoft text-brand text-xs font-semibold rounded-full mb-2">
             <FolderKanban className="w-3.5 h-3.5" />
             <span>รายละเอียดกิจกรรมและโครงการ ปีงบ {currentYear}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-ink">
             โครงการและกิจกรรมตามแผนปฏิบัติการ
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-muted mt-1">
             รายการโครงการและกิจกรรมตามแผนปฏิบัติการประจำปี
           </p>
         </div>
@@ -195,21 +198,21 @@ function ProjectsContent() {
               onClick={handleSyncFromSheet}
               disabled={isSyncing}
               title="ดึงข้อมูลกิจกรรมและงบประมาณล่าสุดจาก Google Sheets"
-              className="active-press inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-semibold border border-emerald-200 dark:border-emerald-800 shadow-sm transition-all disabled:opacity-50"
+              className="btn-ghost disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-emerald-600' : 'text-emerald-600 dark:text-emerald-400'}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
               <span>{isSyncing ? 'กำลังซิงค์ Sheet...' : 'ซิงค์กับ Google Sheet'}</span>
             </button>
             <button
               onClick={() => setShowAddProjectModal(true)}
-              className="active-press inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
+              className="btn-ghost"
             >
-              <FolderPlus className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+              <FolderPlus className="w-4 h-4" />
               <span>เพิ่มโครงการ</span>
             </button>
             <button
               onClick={() => setShowAddActivityModal(true)}
-              className="active-press inline-flex items-center space-x-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+              className="btn-primary"
             >
               <Plus className="w-4 h-4" />
               <span>เพิ่มกิจกรรม</span>
@@ -261,9 +264,9 @@ function ProjectsContent() {
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-[#1e293b] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 min-w-0">
         {/* Department Tabs */}
-        <div className="flex space-x-2 overflow-x-auto pb-1 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex space-x-2 overflow-x-auto pb-1 border-b border-slate-100 dark:border-slate-800 min-w-0">
           {departments.map((d) => {
             const count = d.id === 'all' 
               ? filteredActivities.length 
@@ -292,7 +295,7 @@ function ProjectsContent() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">ประเภทเงิน:</span>
-            <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+            <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg overflow-x-auto max-w-full">
               <button
                 onClick={() => setSelectedType('all')}
                 className={`active-press px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${
@@ -340,12 +343,23 @@ function ProjectsContent() {
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
             <input
-              type="text"
+              type="search"
+              aria-label="ค้นหากิจกรรม โครงการ หรือครูผู้รับผิดชอบ"
               placeholder="ค้นหากิจกรรม, โครงการ, ครู..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              className="w-full pl-9 pr-8 py-1.5 text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-2 border-slate-900 dark:border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-700 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                aria-label="ล้างคำค้นหา"
+                className="absolute right-2 top-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -547,7 +561,7 @@ function ProjectsContent() {
                                     </span>
                                   )}
                                   <span className="text-[10px] px-2 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                    {act.budgetType}
+                                    {normalizeBudgetType(act.budgetType)}
                                   </span>
                                   <span className="text-[10px] text-slate-400">
                                     {act.responsiblePerson ? `ผู้รับผิดชอบ: ${act.responsiblePerson}` : ''}
@@ -669,7 +683,7 @@ function ProjectsContent() {
                           </span>
                         )}
                         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${typeBadgeColor}`}>
-                          {activity.budgetType}
+                          {normalizeBudgetType(activity.budgetType)}
                         </span>
                         <span className="text-[11px] text-slate-400 dark:text-slate-500">
                           {activity.departmentName}

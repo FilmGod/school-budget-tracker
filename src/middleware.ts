@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow login page, auth api, and static files
@@ -18,12 +19,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check auth cookie
-  const authToken = request.cookies.get('bwr_auth_token')?.value;
+  // Check the signed session cookie (HMAC + expiry)
+  const role = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
 
-  if (authToken !== 'auth_admin_authenticated' && authToken !== 'auth_teacher_authenticated') {
+  if (!role) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { success: false, error: 'กรุณาเข้าสู่ระบบใหม่' },
+        { status: 401 }
+      );
+    }
     const loginUrl = new URL('/login', request.url);
-    if (pathname !== '/' && !pathname.startsWith('/api/')) {
+    if (pathname !== '/') {
       loginUrl.searchParams.set('from', pathname);
     }
     return NextResponse.redirect(loginUrl);

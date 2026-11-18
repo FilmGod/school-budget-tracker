@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { ActivityReport, EvaluationItem } from '@/lib/types';
 import ReportPrintView from '@/components/ReportPrintView';
 import { exportReportToDocx } from '@/lib/docxExport';
+import { normalizeBudgetType } from '@/lib/budget';
 import { 
   FileText, 
   Download, 
@@ -29,7 +30,8 @@ import {
   Filter,
   CheckCircle,
   AlertCircle,
-  FolderOpen
+  FolderOpen,
+  X
 } from 'lucide-react';
 
 function ReportsContent() {
@@ -80,19 +82,16 @@ function ReportsContent() {
     { objective: 'เพื่อส่งเสริมการจัดกิจกรรมการเรียนรู้ที่เน้นผู้เรียนเป็นสำคัญ', isAchieved: true }
   ]);
 
-  // 3 Images
-  const [images, setImages] = useState<string[]>([
-    'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&auto=format&fit=crop&q=60',
-    'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop&q=60',
-    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&auto=format&fit=crop&q=60'
-  ]);
+  // 3 Images — starts empty, the teacher uploads their own photos
+  const [images, setImages] = useState<string[]>([]);
 
   // Signatures
   const [reporterName, setReporterName] = useState<string>('');
-  const [reporterPosition, setReporterPosition] = useState<string>('ครู');
-  const [directorName, setDirectorName] = useState<string>('นายผู้อำนวยการ เกียรติภูมิสูง');
+  const [reporterPosition, setReporterPosition] = useState<string>('');
+  const [directorName, setDirectorName] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Sync objective changes to evaluation list
   const syncObjectivesToEvaluations = (newObjs: string[]) => {
@@ -143,20 +142,40 @@ function ReportsContent() {
     }
   };
 
-  // Auto-fill when activity changes
+  // When the selected activity changes: pull its numbers, then either load that
+  // activity's saved report or clear the previous one's text so nothing carries over.
+  const loadedActivityRef = useRef<string>('');
+
   useEffect(() => {
-    if (selectedActivityId) {
-      const act = filteredActivities.find(a => a.id === selectedActivityId);
-      if (act) {
-        setSelectedProjectId(act.projectId);
-        setAllocatedBudget(act.allocatedAmount);
-        setBudgetSource(act.budgetType);
-        setActualUsedBudget(act.usedAmount || act.allocatedAmount);
-        setResponsiblePerson(act.responsiblePerson || '');
-        if (act.approvedDate) setPeriodStart(act.approvedDate);
-      }
+    if (!selectedActivityId) return;
+    if (loadedActivityRef.current === selectedActivityId) return;
+    loadedActivityRef.current = selectedActivityId;
+
+    const act = filteredActivities.find(a => a.id === selectedActivityId);
+    if (act) {
+      setSelectedProjectId(act.projectId);
+      setAllocatedBudget(act.allocatedAmount);
+      setBudgetSource(normalizeBudgetType(act.budgetType));
+      setActualUsedBudget(act.usedAmount || act.allocatedAmount);
+      setResponsiblePerson(act.responsiblePerson || '');
+      if (act.approvedDate) setPeriodStart(act.approvedDate);
     }
-  }, [selectedActivityId, filteredActivities]);
+
+    const existing = filteredReports.find(r => r.activityId === selectedActivityId);
+    if (existing) {
+      loadSavedReport(existing);
+    } else {
+      setObjectives(['']);
+      setEvaluations([]);
+      setQuantitativeTarget('');
+      setQualitativeTarget('');
+      setPerformanceResult('');
+      setProblemsObstacles('');
+      setImages([]);
+      setPeriodEnd('');
+    }
+    setValidationErrors([]);
+  }, [selectedActivityId, filteredActivities, filteredReports]);
 
   // Current compiled report object
   const currentProject = filteredProjects.find(p => p.id === selectedProjectId);
@@ -187,7 +206,35 @@ function ReportsContent() {
     createdAt: new Date().toISOString()
   };
 
+  const validateReport = (): string[] => {
+    const errs: string[] = [];
+    if (!selectedActivityId) errs.push('ยังไม่ได้เลือกชื่อกิจกรรม');
+    if (!reporterName.trim()) errs.push('ยังไม่ได้กรอกชื่อ-สกุล ผู้รายงาน');
+    if (!reporterPosition.trim()) errs.push('ยังไม่ได้กรอกตำแหน่งผู้รายงาน');
+    if (!directorName.trim()) errs.push('ยังไม่ได้กรอกชื่อ-สกุล ผู้อำนวยการโรงเรียน');
+    if (!objectives.some((o) => o.trim())) errs.push('ยังไม่ได้กรอกวัตถุประสงค์ของโครงการ');
+    if (!performanceResult.trim()) errs.push('ยังไม่ได้กรอกผลการดำเนินงาน');
+    if (!allocatedBudget || allocatedBudget <= 0) errs.push('ยังไม่ได้กรอกงบประมาณที่ได้รับจัดสรร');
+    return errs;
+  };
+
+  const showValidationErrors = (errs: string[]) => {
+    setValidationErrors(errs);
+    if (errs.length > 0) {
+      setSaveSuccess(false);
+      setTimeout(() => {
+        document.getElementById('report-form-errors')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+  };
+
   const handleSave = async () => {
+    const errs = validateReport();
+    if (errs.length > 0) {
+      showValidationErrors(errs);
+      return;
+    }
+    setValidationErrors([]);
     setIsSaving(true);
     await saveReport(reportData);
     setIsSaving(false);
@@ -196,6 +243,12 @@ function ReportsContent() {
   };
 
   const handleDocxExport = async () => {
+    const errs = validateReport();
+    if (errs.length > 0) {
+      showValidationErrors(errs);
+      return;
+    }
+    setValidationErrors([]);
     await exportReportToDocx(reportData);
   };
 
@@ -276,18 +329,18 @@ function ReportsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="reports-scope legacy-page space-y-6 stagger">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-sky-50 text-sky-700 text-xs font-semibold rounded-full border border-sky-100 mb-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-brandSoft text-brand text-xs font-semibold rounded-full mb-2">
             <FileText className="w-3.5 h-3.5" />
             <span>ระบบรายงานโครงการ/กิจกรรม ปีงบ {currentYear}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-ink">
             รายงานผลการดำเนินงานโครงการ / กิจกรรม
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted mt-1">
             {activeTab === 'form' 
               ? 'บันทึกสรุปผลการดำเนินงานโครงการ/กิจกรรม และพิมพ์แบบรายงานราชการ (A4)'
               : 'รายการกิจกรรมที่ได้รับการรายงานผลแล้วในระบบ สามารถดูตัวอย่าง สั่งพิมพ์ หรือแก้ไขข้อมูลได้'
@@ -296,7 +349,7 @@ function ReportsContent() {
         </div>
 
         {/* Tab Navigation: แยก 2 หน้าชัดเจน */}
-        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start sm:self-auto">
+        <div className="flex bg-canvas p-1.5 rounded-lg border border-line self-start sm:self-auto">
           <button
             onClick={() => setActiveTab('form')}
             className={`flex items-center space-x-2 py-2 px-4 text-xs font-bold rounded-xl transition-all ${
@@ -466,7 +519,7 @@ function ReportsContent() {
               {/* Budget Source */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  แหล่งงบประมาณ (กดเลือก) <span className="text-rose-500">*</span>
+                  แหล่งงบประมาณ (เลือกจากระบบ) <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={budgetSource}
@@ -517,7 +570,7 @@ function ReportsContent() {
                 </label>
                 <input
                   type="text"
-                  placeholder="เช่น ครูบุหงา / หัวหน้ากลุ่มสาระ"
+                  placeholder=""
                   value={responsiblePerson}
                   onChange={(e) => setResponsiblePerson(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -529,7 +582,7 @@ function ReportsContent() {
                 </label>
                 <input
                   type="text"
-                  placeholder="เช่น 1 พ.ย. 2569"
+                  placeholder=""
                   value={periodStart}
                   onChange={(e) => setPeriodStart(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -541,7 +594,7 @@ function ReportsContent() {
                 </label>
                 <input
                   type="text"
-                  placeholder="เช่น 15 พ.ย. 2569"
+                  placeholder=""
                   value={periodEnd}
                   onChange={(e) => setPeriodEnd(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -565,7 +618,7 @@ function ReportsContent() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-semibold text-slate-700">
-                  วัตถุประสงค์ของโครงการ (เพิ่มได้หลายข้อ) <span className="text-rose-500">*</span>
+                  วัตถุประสงค์ของโครงการ (กรอกให้ตรงกับที่เขียนในแผน) <span className="text-rose-500">*</span>
                 </label>
                 <button
                   type="button"
@@ -606,11 +659,11 @@ function ReportsContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  เป้าหมายเชิงปริมาณ (กรอกเอง)
+                  เป้าหมายเชิงปริมาณ (กรอกให้ตรงกับที่เขียนในแผน)
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="เช่น นักเรียนชั้นมัธยมศึกษาปีที่ 1-3 เข้าร่วมกิจกรรมจำนวน 250 คน (ร้อยละ 100)"
+                  placeholder=""
                   value={quantitativeTarget}
                   onChange={(e) => setQuantitativeTarget(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -618,11 +671,11 @@ function ReportsContent() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  เป้าหมายเชิงคุณภาพ (กรอกเอง)
+                  เป้าหมายเชิงคุณภาพ (กรอกให้ตรงกับที่เขียนในแผน)
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="เช่น นักเรียนมีความรู้ความเข้าใจ มีทักษะปฏิบัติ และมีผลการประเมินในระดับดีขึ้นไป"
+                  placeholder=""
                   value={qualitativeTarget}
                   onChange={(e) => setQualitativeTarget(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -633,7 +686,7 @@ function ReportsContent() {
             {/* Performance Result */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                ผลการดำเนินงาน (กรอกเอง) <span className="text-rose-500">*</span>
+                ผลการดำเนินงาน (กรอกให้ตรงกับที่เขียนในแผน) <span className="text-rose-500">*</span>
               </label>
               <textarea
                 rows={3}
@@ -648,11 +701,11 @@ function ReportsContent() {
             {/* Problems and Obstacles */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                ปัญหา อุปสรรค และข้อเสนอแนะ (กรอกเอง)
+                ปัญหา อุปสรรค และข้อเสนอแนะ (กรอกให้ตรงกับที่เขียนในแผน)
               </label>
               <textarea
                 rows={2}
-                placeholder="เช่น การจัดกิจกรรมควรเพิ่มเวลาในการฝึกซ้อม หรือ ไม่มีปัญหาอุปสรรคใดๆ"
+                placeholder=""
                 value={problemsObstacles}
                 onChange={(e) => setProblemsObstacles(e.target.value)}
                 className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -724,7 +777,7 @@ function ReportsContent() {
                 4
               </span>
               <h2 className="text-base font-bold text-slate-900">
-                ภาพถ่ายกิจกรรม 3 ภาพ (อัปโหลดจากเครื่อง หรือใช้รูปที่จัดเตรียม)
+                ภาพถ่ายกิจกรรม 3 ภาพ (อัปโหลดจากเครื่อง)
               </h2>
             </div>
 
@@ -736,12 +789,14 @@ function ReportsContent() {
                       <img
                         src={images[idx]}
                         alt={`ภาพกิจกรรมที่ ${idx + 1}`}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="text-slate-400 text-xs flex flex-col items-center">
-                        <ImageIcon className="w-8 h-8 mb-1 text-slate-300" />
-                        <span>ยังไม่มีรูปภาพ</span>
+                      <div className="text-muted text-xs flex flex-col items-center">
+                        <ImageIcon className="w-8 h-8 mb-1.5 opacity-60" />
+                        <span>ยังไม่เลือกรูปภาพ</span>
                       </div>
                     )}
                   </div>
@@ -764,54 +819,82 @@ function ReportsContent() {
           {/* SECTION 5: Signatures */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-100">
-              <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
+              <span className="w-7 h-7 flex-shrink-0 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
                 5
               </span>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="min-w-0 flex-1 text-sm sm:text-base font-bold leading-snug text-slate-900">
                 การลงชื่อผู้รายงาน และผู้บริหาร
               </h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="reporter-name" className="block text-xs font-semibold text-slate-700 mb-1">
                   ชื่อ-สกุล ผู้รายงาน <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  id="reporter-name"
                   type="text"
-                  placeholder="เช่น นาย/นาง/นางสาว..."
+                  placeholder=""
                   value={reporterName}
                   onChange={(e) => setReporterName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
+                  className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium ${
+                    validationErrors.length > 0 && !reporterName.trim() ? 'border-rose-400 bg-rose-50' : 'border-slate-300'
+                  }`}
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="reporter-position" className="block text-xs font-semibold text-slate-700 mb-1">
                   ตำแหน่งผู้รายงาน <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  id="reporter-position"
                   type="text"
-                  placeholder="เช่น ครู / ครูชำนาญการพิเศษ"
+                  placeholder=""
                   value={reporterPosition}
                   onChange={(e) => setReporterPosition(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                    validationErrors.length > 0 && !reporterPosition.trim() ? 'border-rose-400 bg-rose-50' : 'border-slate-300'
+                  }`}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="director-name" className="block text-xs font-semibold text-slate-700 mb-1">
                   ชื่อ-สกุล ผู้อำนวยการโรงเรียน <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  id="director-name"
                   type="text"
-                  placeholder="เช่น นายผู้อำนวยการ เกียรติภูมิสูง"
+                  placeholder=""
                   value={directorName}
                   onChange={(e) => setDirectorName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
+                  className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium ${
+                    validationErrors.length > 0 && !directorName.trim() ? 'border-rose-400 bg-rose-50' : 'border-slate-300'
+                  }`}
                 />
               </div>
             </div>
           </div>
+
+          {/* Validation errors */}
+          {validationErrors.length > 0 && (
+            <div
+              id="report-form-errors"
+              role="alert"
+              className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700"
+            >
+              <div className="flex items-center space-x-1.5 font-bold mb-1">
+                <AlertCircle className="w-4 h-4" />
+                <span>ยังบันทึกไม่ได้ เพราะข้อมูลยังไม่ครบ</span>
+              </div>
+              <ul className="list-disc list-inside space-y-0.5">
+                {validationErrors.map((err) => (
+                  <li key={err}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Bottom Action Buttons */}
           <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-end gap-3">
@@ -920,12 +1003,23 @@ function ReportsContent() {
           <div className="relative flex-1 md:w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
-              type="text"
+              type="search"
+              aria-label="ค้นหารายงาน กิจกรรม หรือชื่อผู้รายงาน"
               placeholder="ค้นหากิจกรรม, โครงการ, ผู้รายงาน..."
               value={searchReportText}
               onChange={(e) => setSearchReportText(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 border-2 border-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-700"
             />
+            {searchReportText && (
+              <button
+                type="button"
+                onClick={() => setSearchReportText('')}
+                aria-label="ล้างคำค้นหา"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <button

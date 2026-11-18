@@ -119,7 +119,7 @@ export default function DocumentModal({ doc, onClose }: DocumentModalProps) {
             <input
               ref={inputRef}
               type="text"
-              placeholder="เช่น เล่มแผนปฏิบัติการประจำปี 2570 ฉบับสมบูรณ์"
+              placeholder=""
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-semibold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"

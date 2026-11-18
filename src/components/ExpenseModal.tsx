@@ -242,7 +242,7 @@ export default function ExpenseModal({
             </label>
             <input
               type="text"
-              placeholder="เช่น 25 ต.ค. 69 หรือ วันนี้"
+              placeholder=""
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -256,7 +256,7 @@ export default function ExpenseModal({
             </label>
             <textarea
               rows={2}
-              placeholder="เช่น ค่าจัดซื้อวัสดุฝึกอบรม, ค่าเดินทางไปราชการ"
+              placeholder=""
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { ActivityReport } from '@/lib/types';
 import { Printer, Download, ArrowLeft, Sparkles, FileText, Check, Image as ImageIcon, Info } from 'lucide-react';
 import { exportReportToDocx } from '@/lib/docxExport';
@@ -13,6 +13,48 @@ interface ReportPrintViewProps {
 export default function ReportPrintView({ report, onBack }: ReportPrintViewProps) {
   const [templateType, setTemplateType] = useState<'infographic' | 'formal'>('infographic');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  // Fit-to-page: when a report carries many objectives the content is scaled
+  // down just enough to keep everything on one A4 sheet.
+  const printCardRef = useRef<HTMLDivElement | null>(null);
+  const printContentRef = useRef<HTMLDivElement | null>(null);
+  const [printZoom, setPrintZoom] = useState(1);
+
+  const formalCardRef = useRef<HTMLDivElement | null>(null);
+  const formalContentRef = useRef<HTMLDivElement | null>(null);
+  const [formalZoom, setFormalZoom] = useState(1);
+
+  useLayoutEffect(() => {
+    const fit = () => {
+      const pairs: Array<[HTMLDivElement | null, HTMLDivElement | null, (v: number) => void]> = [
+        [printCardRef.current, printContentRef.current, setPrintZoom],
+        [formalCardRef.current, formalContentRef.current, setFormalZoom]
+      ];
+
+      for (const [card, content, setter] of pairs) {
+        if (!card || !content) continue;
+        content.style.zoom = '1';
+        const style = window.getComputedStyle(card);
+        const paddingY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+        const available = card.clientHeight - paddingY;
+        const natural = content.scrollHeight;
+        if (!natural || available <= 0) continue;
+        const scale = natural > available ? Math.max(0.6, available / natural) : 1;
+        content.style.zoom = String(scale);
+        setter(scale);
+      }
+    };
+
+    fit();
+    const t1 = window.setTimeout(fit, 120);
+    const t2 = window.setTimeout(fit, 450);
+    window.addEventListener('resize', fit);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('resize', fit);
+    };
+  }, [report, templateType]);
 
   const handlePrint = () => {
     window.print();
@@ -57,6 +99,20 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
   const schoolName = 'โรงเรียนบางกล่ำวิทยา รัชมังคลาภิเษก';
   const areaOffice = 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาสงขลา สตูล';
   const fiscalYearThai = report.fiscalYear || '2570';
+
+  // The A4 sheet is a fixed 297mm tall. When a report carries many objectives,
+  // the layout tightens instead of clipping so every item still fits one page.
+  const objectivesList = report.objectives || [];
+  const evaluationsList = report.evaluations || [];
+  const itemCount = Math.max(objectivesList.length, evaluationsList.length);
+  const density: 'normal' | 'compact' | 'dense' = itemCount <= 3 ? 'normal' : itemCount <= 5 ? 'compact' : 'dense';
+
+  const objectiveTextClass =
+    density === 'normal' ? 'text-[16px] space-y-1.5' : density === 'compact' ? 'text-[15px] space-y-1' : 'text-[14px] space-y-[3px]';
+  const objectiveTitleClass = density === 'normal' ? 'text-[15px]' : 'text-[13px]';
+  const tableTextClass = density === 'normal' ? 'text-[15px]' : density === 'compact' ? 'text-[13px]' : 'text-[11.5px]';
+  const tableCellPadding = density === 'normal' ? 'py-0.5 px-1' : 'py-[1px] px-1';
+  const tableHeadPadding = density === 'normal' ? 'py-0.5 px-1.5' : 'py-[1px] px-1.5';
 
   return (
     <div className="space-y-6">
@@ -203,25 +259,36 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
 
             {/* Main Content Area: Single cohesive card wrapping Columns & Signatures */}
             <div className="relative z-10 px-4 my-2 flex-1 flex flex-col justify-between overflow-hidden">
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 flex-1 flex flex-col justify-between overflow-hidden">
+              <div
+                ref={printCardRef}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3.5 flex-1 overflow-hidden"
+              >
+                <div
+                  ref={printContentRef}
+                  className="flex min-h-full flex-col justify-between"
+                  style={{ zoom: printZoom }}
+                >
                 
                 {/* 2-Column Content Layout (Natural top-to-bottom auto layout) */}
                 <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden">
                   {/* ---------------- LEFT COLUMN (col-span-5) ---------------- */}
                   {/* Natural auto-spacing: เป้าหมาย moves up close to วัตถุประสงค์ with balanced spacing */}
-                  <div className="col-span-5 flex flex-col pr-3.5 border-r border-slate-200 overflow-hidden space-y-3">
-                    {/* วัตถุประสงค์ */}
-                    <div className="bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 shadow-2xs">
+                  <div className="col-span-5 flex flex-col pr-3.5 border-r border-slate-200 space-y-3">
+                    {/* วัตถุประสงค์: กล่องขยายตามจำนวนข้อ แล้วดัน "เป้าหมาย" ลงมาเอง */}
+                    <div className="bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 shadow-2xs flex-shrink-0">
                       <div className="inline-flex items-center px-3 py-1 bg-amber-500 text-white text-[15px] font-bold rounded-full shadow-2xs mb-2 leading-none">
                         วัตถุประสงค์
                       </div>
-                      <div className="text-[16px] text-slate-800 space-y-1.5 pl-1 leading-normal">
-                        {(report.objectives || []).slice(0, 3).map((obj, i) => (
+                      <div className={`text-slate-800 pl-1 leading-normal ${objectiveTextClass}`}>
+                        {objectivesList.slice(0, 12).map((obj, i) => (
                           <div key={i} className="flex items-start space-x-1.5">
                             <span className="font-bold text-slate-900">{i + 1}.</span>
                             <span>{obj}</span>
                           </div>
                         ))}
+                        {objectivesList.length > 12 && (
+                          <div className="text-slate-600 italic">และอีก {objectivesList.length - 12} ข้อ</div>
+                        )}
                       </div>
                     </div>
 
@@ -316,32 +383,35 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       <div className="inline-flex items-center px-3 py-1 bg-amber-500 text-white text-[14px] font-bold rounded mb-1 leading-none shadow-2xs">
                         สรุปผลการดำเนินงานตามเป้าหมาย / ตัวชี้วัด
                       </div>
-                      <table className="w-full text-[15px] border-collapse border border-slate-300">
+                      <table className={`w-full border-collapse border border-slate-300 ${tableTextClass}`}>
                         <thead>
                           <tr className="bg-slate-100 text-slate-800 font-bold">
-                            <th className="border border-slate-300 py-0.5 px-1 text-center w-8">ข้อที่</th>
-                            <th className="border border-slate-300 py-0.5 px-1.5 text-left">วัตถุประสงค์</th>
-                            <th className="border border-slate-300 py-0.5 px-1 text-center w-12">บรรลุ</th>
-                            <th className="border border-slate-300 py-0.5 px-1 text-center w-14">ไม่บรรลุ</th>
-                            <th className="border border-slate-300 py-0.5 px-1.5 text-left w-24">ผลดำเนินงาน</th>
+                            <th className={`border border-slate-300 text-center w-8 ${tableHeadPadding}`}>ข้อที่</th>
+                            <th className={`border border-slate-300 text-left ${tableHeadPadding}`}>วัตถุประสงค์</th>
+                            <th className={`border border-slate-300 text-center w-12 ${tableHeadPadding}`}>บรรลุ</th>
+                            <th className={`border border-slate-300 text-center w-14 ${tableHeadPadding}`}>ไม่บรรลุ</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(report.evaluations || []).slice(0, 3).map((ev, i) => (
+                          {evaluationsList.slice(0, 12).map((ev, i) => (
                             <tr key={i} className="hover:bg-slate-50">
-                              <td className="border border-slate-300 py-0.5 px-1 text-center font-bold text-slate-700">{i + 1}</td>
-                              <td className="border border-slate-300 py-0.5 px-1.5 truncate max-w-[130px]">{ev.objective}</td>
-                              <td className="border border-slate-300 py-0.5 px-1 text-center font-bold text-emerald-700">
+                              <td className={`border border-slate-300 text-center font-bold text-slate-700 ${tableCellPadding}`}>{i + 1}</td>
+                              <td className={`border border-slate-300 ${tableCellPadding}`}>{ev.objective}</td>
+                              <td className={`border border-slate-300 text-center font-bold text-emerald-700 ${tableCellPadding}`}>
                                 {ev.isAchieved ? '✓' : ''}
                               </td>
-                              <td className="border border-slate-300 py-0.5 px-1 text-center font-bold text-rose-700">
+                              <td className={`border border-slate-300 text-center font-bold text-rose-700 ${tableCellPadding}`}>
                                 {!ev.isAchieved ? '✓' : ''}
-                              </td>
-                              <td className="border border-slate-300 py-0.5 px-1.5 text-slate-700">
-                                {ev.isAchieved ? 'บรรลุเป้าหมาย' : 'ไม่บรรลุ'}
                               </td>
                             </tr>
                           ))}
+                          {evaluationsList.length > 12 && (
+                            <tr>
+                              <td className={`border border-slate-300 text-center text-slate-600 ${tableCellPadding}`} colSpan={4}>
+                                และอีก {evaluationsList.length - 12} ข้อ
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -360,11 +430,12 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                   {/* Right signature capsule */}
                   <div className="bg-amber-50/70 border border-amber-200/90 rounded-xl px-3 py-1.5 text-center text-[15px] leading-tight shadow-2xs">
                     <div className="text-slate-700 whitespace-nowrap">ลงชื่อ................................................ผู้อนุมัติโครงการ</div>
-                    <div className="font-bold text-slate-900 mt-0.5 whitespace-nowrap">( {report.directorName || 'นายผู้อำนวยการ เกียรติภูมิสูง'} )</div>
+                    <div className="font-bold text-slate-900 mt-0.5 whitespace-nowrap">( {report.directorName || '........................................................'} )</div>
                     <div className="text-slate-600 text-[14px] whitespace-nowrap">ตำแหน่ง ผู้อำนวยการโรงเรียน</div>
                   </div>
                 </div>
 
+                </div>
               </div>
             </div>
 
@@ -387,6 +458,7 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
       {templateType === 'formal' && (
         <div className="flex justify-center print:contents">
           <div 
+            ref={formalCardRef}
             className="print-page w-[210mm] h-[297mm] max-h-[297mm] min-h-[297mm] bg-white px-10 py-9 shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 text-slate-900 flex flex-col justify-between overflow-hidden"
             style={{ 
               width: '210mm',
@@ -397,6 +469,11 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
               fontFamily: "'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', sans-serif"
             }}
           >
+            <div
+              ref={formalContentRef}
+              className="flex min-h-full flex-col justify-between gap-2"
+              style={{ zoom: formalZoom }}
+            >
             <div className="space-y-4">
               {/* Header (Title 18pt) */}
               <div className="text-center border-b-2 border-slate-900 pb-2">
@@ -567,10 +644,11 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                 {/* Right: ผู้อำนวยการโรงเรียน */}
                 <div className="text-center space-y-0.5">
                   <div className="whitespace-nowrap">ลงชื่อ........................................................ผู้อำนวยการโรงเรียน</div>
-                  <div className="font-bold whitespace-nowrap">( {report.directorName || 'นายผู้อำนวยการ เกียรติภูมิสูง'} )</div>
+                  <div className="font-bold whitespace-nowrap">( {report.directorName || '........................................................'} )</div>
                   <div className="text-slate-700 whitespace-nowrap">ตำแหน่ง ผู้อำนวยการโรงเรียน</div>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>

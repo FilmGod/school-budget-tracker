@@ -52,6 +52,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setCurrentYear(storedYear);
     }
     fetchData();
+
+    // The server session is the source of truth for the admin role.
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setIsAdminState(!!data.isAdmin);
+        try {
+          localStorage.setItem('school_budget_is_admin', data.isAdmin ? 'true' : 'false');
+        } catch {
+          /* ignore storage errors */
+        }
+      })
+      .catch(() => {
+        /* keep the cached value when the check fails */
+      });
   }, []);
 
   const setIsAdmin = (val: boolean) => {
@@ -327,7 +343,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     () => sortActivities((db.activities || []).filter(a => a.fiscalYear === currentYear), filteredProjects),
     [db.activities, currentYear, filteredProjects]
   );
-  const filteredReports = (db.reports || []).filter(r => r.fiscalYear === currentYear);
+  const filteredReports = (db.reports || []).filter(
+    // Ignore stray rows that are not linked to an activity (saved before the
+    // form started validating the selected activity).
+    (r) => r.fiscalYear === currentYear && !!r.activityId
+  );
   const filteredDocuments = (db.documents || []).filter(d => d.fiscalYear === currentYear);
 
   return (

@@ -1380,14 +1380,10 @@
           "isAchieved": true
         }
       ],
-      "images": [
-        "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&auto=format&fit=crop&q=60"
-      ],
+      "images": [],
       "reporterName": "นางสาวจินตนา รักการสอน",
       "reporterPosition": "ครู ชำนาญการพิเศษ",
-      "directorName": "นายผู้อำนวยการ เกียรติภูมิสูง",
+      "directorName": "",
       "createdAt": "2026-10-25T10:00:00.000Z"
     }
   ],

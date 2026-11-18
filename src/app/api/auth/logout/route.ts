@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { SESSION_COOKIE } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST() {
   const response = NextResponse.json({ success: true });
   response.cookies.set({
-    name: 'bwr_auth_token',
+    name: SESSION_COOKIE,
     value: '',
     httpOnly: true,
     maxAge: 0,
