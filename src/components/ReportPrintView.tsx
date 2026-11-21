@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useLayoutEffect, useRef, useState } from 'react';
-import { ActivityReport } from '@/lib/types';
+import { ActivityReport, getReportTargetText } from '@/lib/types';
 import { Printer, Download, ArrowLeft, Sparkles, FileText, Check, Image as ImageIcon, Info } from 'lucide-react';
 import { exportReportToDocx } from '@/lib/docxExport';
 
@@ -297,22 +297,9 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                       <div className="inline-flex items-center px-3 py-1 bg-amber-500 text-white text-[15px] font-bold rounded-full shadow-2xs mb-2 leading-none">
                         เป้าหมาย
                       </div>
-                      <div className="space-y-2 pl-1 text-[16px] leading-normal">
-                        <div>
-                          <div className="font-bold text-amber-900 flex items-center gap-1.5">
-                            <span className="text-amber-600">▪</span>
-                            <span>เชิงปริมาณ</span>
-                          </div>
-                          <p className="text-slate-800 pl-3.5 pt-0.5">{report.quantitativeTarget || '-'}</p>
-                        </div>
-                        <div>
-                          <div className="font-bold text-amber-900 flex items-center gap-1.5">
-                            <span className="text-amber-600">▪</span>
-                            <span>เชิงคุณภาพ</span>
-                          </div>
-                          <p className="text-slate-800 pl-3.5 pt-0.5">{report.qualitativeTarget || '-'}</p>
-                        </div>
-                      </div>
+                      <p className="text-slate-800 pl-1 text-[16px] leading-normal whitespace-pre-line">
+                        {getReportTargetText(report)}
+                      </p>
                     </div>
                   </div>
 
@@ -543,12 +530,8 @@ export default function ReportPrintView({ report, onBack }: ReportPrintViewProps
                     <span>{(report.objectives || []).join(' | ')}</span>
                   </div>
                   <div>
-                    <span className="font-bold">เป้าหมายเชิงปริมาณ: </span>
-                    <span>{report.quantitativeTarget || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="font-bold">เป้าหมายเชิงคุณภาพ: </span>
-                    <span>{report.qualitativeTarget || '-'}</span>
+                    <span className="font-bold">เป้าหมาย: </span>
+                    <span className="whitespace-pre-line">{getReportTargetText(report)}</span>
                   </div>
                   <div>
                     <span className="font-bold">ผลการดำเนินงาน: </span>

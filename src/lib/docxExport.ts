@@ -1,6 +1,6 @@
 import { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle, ImageRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { ActivityReport } from './types';
+import { ActivityReport, getReportTargetText } from './types';
 
 // Helper to convert base64 or fetch image URL to Uint8Array
 async function getImageBuffer(url: string): Promise<Uint8Array | null> {
@@ -245,15 +245,8 @@ export async function exportReportToDocx(report: ActivityReport) {
           new Paragraph({
             spacing: { before: 100, after: 60 },
             children: [
-              new TextRun({ text: 'เป้าหมายเชิงปริมาณ: ', font: 'TH Sarabun PSK', size: 30, bold: true }),
-              new TextRun({ text: report.quantitativeTarget || '-', font: 'TH Sarabun PSK', size: 30 }),
-            ],
-          }),
-          new Paragraph({
-            spacing: { after: 60 },
-            children: [
-              new TextRun({ text: 'เป้าหมายเชิงคุณภาพ: ', font: 'TH Sarabun PSK', size: 30, bold: true }),
-              new TextRun({ text: report.qualitativeTarget || '-', font: 'TH Sarabun PSK', size: 30 }),
+              new TextRun({ text: 'เป้าหมาย: ', font: 'TH Sarabun PSK', size: 30, bold: true }),
+              new TextRun({ text: getReportTargetText(report), font: 'TH Sarabun PSK', size: 30 }),
             ],
           }),
           new Paragraph({

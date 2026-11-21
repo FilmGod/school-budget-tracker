@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { ActivityReport, EvaluationItem } from '@/lib/types';
+import { ActivityReport, EvaluationItem, getReportTargetText } from '@/lib/types';
 import ReportPrintView from '@/components/ReportPrintView';
 import { exportReportToDocx } from '@/lib/docxExport';
 import { normalizeBudgetType } from '@/lib/budget';
@@ -71,8 +71,7 @@ function ReportsContent() {
     'เพื่อพัฒนาและยกระดับศักยภาพของผู้เรียนตามแผนงานที่กำหนด',
     'เพื่อส่งเสริมการจัดกิจกรรมการเรียนรู้ที่เน้นผู้เรียนเป็นสำคัญ'
   ]);
-  const [quantitativeTarget, setQuantitativeTarget] = useState<string>('ผู้เรียนและครูผู้เข้าร่วมกิจกรรมร้อยละ 90 ขึ้นไป');
-  const [qualitativeTarget, setQualitativeTarget] = useState<string>('ผู้เรียนมีความรู้ ทักษะ และเจตคติที่ดี และสามารถนำความรู้ไปประยุกต์ใช้ได้');
+  const [target, setTarget] = useState<string>('');
   const [performanceResult, setPerformanceResult] = useState<string>('');
   const [problemsObstacles, setProblemsObstacles] = useState<string>('ไม่มี หรือกิจกรรมดำเนินไปด้วยความเรียบร้อย');
   
@@ -167,8 +166,7 @@ function ReportsContent() {
     } else {
       setObjectives(['']);
       setEvaluations([]);
-      setQuantitativeTarget('');
-      setQualitativeTarget('');
+      setTarget('');
       setPerformanceResult('');
       setProblemsObstacles('');
       setImages([]);
@@ -194,8 +192,9 @@ function ReportsContent() {
     periodStart,
     periodEnd,
     objectives: objectives.filter(o => o.trim().length > 0),
-    quantitativeTarget,
-    qualitativeTarget,
+    target,
+    quantitativeTarget: target,
+    qualitativeTarget: '',
     performanceResult,
     problemsObstacles,
     evaluations,
@@ -261,8 +260,8 @@ function ReportsContent() {
     setPeriodStart(r.periodStart);
     setPeriodEnd(r.periodEnd);
     setObjectives(r.objectives);
-    setQuantitativeTarget(r.quantitativeTarget);
-    setQualitativeTarget(r.qualitativeTarget);
+    const resolvedTarget = getReportTargetText(r);
+    setTarget(resolvedTarget === '-' ? '' : resolvedTarget);
     setPerformanceResult(r.performanceResult);
     setProblemsObstacles(r.problemsObstacles);
     setEvaluations(r.evaluations);
@@ -655,32 +654,18 @@ function ReportsContent() {
               </div>
             </div>
 
-            {/* Targets */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  เป้าหมายเชิงปริมาณ (กรอกให้ตรงกับที่เขียนในแผน)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder=""
-                  value={quantitativeTarget}
-                  onChange={(e) => setQuantitativeTarget(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  เป้าหมายเชิงคุณภาพ (กรอกให้ตรงกับที่เขียนในแผน)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder=""
-                  value={qualitativeTarget}
-                  onChange={(e) => setQualitativeTarget(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
+            {/* Target */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                เป้าหมาย (กรอกให้ตรงกับที่เขียนในแผน)
+              </label>
+              <textarea
+                rows={2}
+                placeholder="เช่น ผู้เรียนและครูผู้เข้าร่วมกิจกรรมร้อยละ 90 ขึ้นไป มีความรู้ ทักษะ และเจตคติที่ดี และสามารถนำความรู้ไปประยุกต์ใช้ได้"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
             </div>
 
             {/* Performance Result */}

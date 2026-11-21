@@ -65,8 +65,9 @@ export interface ActivityReport {
   periodStart: string;
   periodEnd: string;
   objectives: string[];
-  quantitativeTarget: string;
-  qualitativeTarget: string;
+  target?: string;
+  quantitativeTarget?: string;
+  qualitativeTarget?: string;
   performanceResult: string;
   problemsObstacles: string;
   evaluations: EvaluationItem[];
@@ -102,4 +103,16 @@ export interface DatabaseSchema {
   activities: Activity[];
   reports: ActivityReport[];
   documents: ProjectDocument[];
+}
+
+export function getReportTargetText(
+  report: Pick<ActivityReport, 'target' | 'quantitativeTarget' | 'qualitativeTarget'>
+): string {
+  if (report.target && report.target.trim()) {
+    return report.target.trim();
+  }
+  const parts = [report.quantitativeTarget, report.qualitativeTarget]
+    .map((v) => (v || '').trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts.join(' ') : '-';
 }
