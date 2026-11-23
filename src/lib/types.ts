@@ -10,6 +10,14 @@ export interface ExpenseItem {
   note?: string;
 }
 
+export interface ActivityPlanTemplate {
+  id: string;
+  label: string;
+  responsiblePerson?: string;
+  objectives: string[];
+  target: string;
+}
+
 export interface Activity {
   id: string;
   fiscalYear: string;
@@ -30,6 +38,9 @@ export interface Activity {
   note?: string;
   expenses: ExpenseItem[];
   gdriveUrl?: string;
+  planObjectives?: string[];
+  planTarget?: string;
+  planTemplates?: ActivityPlanTemplate[];
 }
 
 export interface Project {

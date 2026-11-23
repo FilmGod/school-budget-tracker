@@ -38,6 +38,8 @@ export default function ActivityModal({
   const [approvedDate, setApprovedDate] = useState(activity?.approvedDate || '');
   const [gdriveUrl, setGdriveUrl] = useState(activity?.gdriveUrl || '');
   const [note, setNote] = useState(activity?.note || '');
+  const [planObjectivesText, setPlanObjectivesText] = useState((activity?.planObjectives || []).join('\n'));
+  const [planTarget, setPlanTarget] = useState(activity?.planTarget || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -79,7 +81,13 @@ export default function ActivityModal({
       approvedDate,
       note,
       expenses: activity?.expenses || [],
-      gdriveUrl
+      gdriveUrl,
+      planObjectives: planObjectivesText
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      planTarget: planTarget.trim() || undefined,
+      planTemplates: activity?.planTemplates,
     };
 
     await saveActivity(updated);
@@ -271,6 +279,32 @@ export default function ActivityModal({
               placeholder="หมายเหตุเพิ่มเติม"
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">
+              วัตถุประสงค์ตามแผน (1 บรรทัดต่อ 1 ข้อ — เติมอัตโนมัติในหน้ารายงาน)
+            </label>
+            <textarea
+              rows={3}
+              placeholder="กรอกวัตถุประสงค์บรรทัดละ 1 ข้อ"
+              value={planObjectivesText}
+              onChange={(e) => setPlanObjectivesText(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">
+              เป้าหมายตามแผน (เติมอัตโนมัติในหน้ารายงาน)
+            </label>
+            <textarea
+              rows={3}
+              placeholder="กรอกเป้าหมายเชิงปริมาณและเชิงคุณภาพตามแผน"
+              value={planTarget}
+              onChange={(e) => setPlanTarget(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>

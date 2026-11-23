@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { ActivityReport, EvaluationItem, getReportTargetText } from '@/lib/types';
+import { ActivityPlanTemplate, ActivityReport, EvaluationItem, getReportTargetText } from '@/lib/types';
 import ReportPrintView from '@/components/ReportPrintView';
 import { exportReportToDocx } from '@/lib/docxExport';
 import { normalizeBudgetType } from '@/lib/budget';
@@ -59,6 +59,7 @@ function ReportsContent() {
   // Form State
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedActivityId, setSelectedActivityId] = useState<string>(actIdParam || '');
+  const [selectedPlanTemplateId, setSelectedPlanTemplateId] = useState<string>('');
   const [allocatedBudget, setAllocatedBudget] = useState<number>(0);
   const [budgetSource, setBudgetSource] = useState<string>('งบอุดหนุน');
   const [actualUsedBudget, setActualUsedBudget] = useState<number>(0);
@@ -149,6 +150,7 @@ function ReportsContent() {
     if (!selectedActivityId) return;
     if (loadedActivityRef.current === selectedActivityId) return;
     loadedActivityRef.current = selectedActivityId;
+    setSelectedPlanTemplateId('');
 
     const act = filteredActivities.find(a => a.id === selectedActivityId);
     if (act) {
@@ -164,9 +166,14 @@ function ReportsContent() {
     if (existing) {
       loadSavedReport(existing);
     } else {
-      setObjectives(['']);
-      setEvaluations([]);
-      setTarget('');
+      if (act?.planObjectives && act.planObjectives.length > 0) {
+        setObjectives([...act.planObjectives]);
+        setEvaluations(act.planObjectives.map(obj => ({ objective: obj, isAchieved: true })));
+      } else {
+        setObjectives(['']);
+        setEvaluations([]);
+      }
+      setTarget(act?.planTarget || '');
       setPerformanceResult('');
       setProblemsObstacles('');
       setImages([]);
@@ -178,6 +185,39 @@ function ReportsContent() {
   // Current compiled report object
   const currentProject = filteredProjects.find(p => p.id === selectedProjectId);
   const currentActivity = filteredActivities.find(a => a.id === selectedActivityId);
+
+  const applyPlanTemplate = (tpl: ActivityPlanTemplate) => {
+    setSelectedPlanTemplateId(tpl.id);
+    const nextObjs = tpl.objectives.length > 0 ? [...tpl.objectives] : [''];
+    setObjectives(nextObjs);
+    setEvaluations(
+      tpl.objectives.length > 0
+        ? tpl.objectives.map(obj => ({ objective: obj, isAchieved: true }))
+        : []
+    );
+    setTarget(tpl.target || '');
+    if (tpl.responsiblePerson) {
+      setResponsiblePerson(tpl.responsiblePerson);
+    }
+  };
+
+  const handleRefillFromPlan = () => {
+    if (!currentActivity) return;
+    if (selectedPlanTemplateId && currentActivity.planTemplates) {
+      const tpl = currentActivity.planTemplates.find(t => t.id === selectedPlanTemplateId);
+      if (tpl) {
+        applyPlanTemplate(tpl);
+        return;
+      }
+    }
+    if (currentActivity.planObjectives && currentActivity.planObjectives.length > 0) {
+      setObjectives([...currentActivity.planObjectives]);
+      setEvaluations(currentActivity.planObjectives.map(obj => ({ objective: obj, isAchieved: true })));
+    }
+    if (currentActivity.planTarget !== undefined) {
+      setTarget(currentActivity.planTarget);
+    }
+  };
 
   const reportData: ActivityReport = {
     id: `rep_${selectedActivityId || Date.now()}`,
@@ -252,6 +292,7 @@ function ReportsContent() {
   };
 
   const loadSavedReport = (r: ActivityReport) => {
+    setSelectedPlanTemplateId('');
     setSelectedActivityId(r.activityId);
     setAllocatedBudget(r.allocatedBudget);
     setBudgetSource(r.budgetSource);
@@ -514,6 +555,30 @@ function ReportsContent() {
               </div>
             </div>
 
+            {currentActivity?.planTemplates && currentActivity.planTemplates.length > 0 && (
+              <div className="p-3.5 rounded-xl bg-sky-50/80 border border-sky-200/80">
+                <label className="block text-xs font-semibold text-sky-900 mb-1.5">
+                  เลือกกลุ่มสาระการเรียนรู้ / กิจกรรมย่อยตามแผน (เติมวัตถุประสงค์และเป้าหมายอัตโนมัติ)
+                </label>
+                <select
+                  value={selectedPlanTemplateId}
+                  onChange={(e) => {
+                    const tpl = currentActivity.planTemplates?.find(t => t.id === e.target.value);
+                    if (tpl) applyPlanTemplate(tpl);
+                    else setSelectedPlanTemplateId('');
+                  }}
+                  className="w-full px-3 py-2 text-xs border border-sky-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white font-medium text-slate-800"
+                >
+                  <option value="">-- เลือกกลุ่มสาระการเรียนรู้ --</option>
+                  {currentActivity.planTemplates.map(tpl => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.label}{tpl.responsiblePerson ? ` (${tpl.responsiblePerson})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Budget Source */}
               <div>
@@ -604,13 +669,27 @@ function ReportsContent() {
 
           {/* SECTION 2: Details & Results */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-100">
-              <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
-                2
-              </span>
-              <h2 className="text-base font-bold text-slate-900">
-                รายละเอียดการดำเนินงานและผลลัพธ์
-              </h2>
+            <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+              <div className="flex items-center space-x-2.5">
+                <span className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-extrabold flex items-center justify-center text-xs">
+                  2
+                </span>
+                <h2 className="text-base font-bold text-slate-900">
+                  รายละเอียดการดำเนินงานและผลลัพธ์
+                </h2>
+              </div>
+              {((currentActivity?.planObjectives && currentActivity.planObjectives.length > 0) ||
+                currentActivity?.planTarget ||
+                selectedPlanTemplateId) && (
+                <button
+                  type="button"
+                  onClick={handleRefillFromPlan}
+                  className="text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>ดึงข้อความจากแผนใหม่</span>
+                </button>
+              )}
             </div>
 
             {/* Objectives dynamic list */}
