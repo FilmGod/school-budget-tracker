@@ -750,7 +750,7 @@ function ReportsContent() {
             {/* Performance Result */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                ผลการดำเนินงาน (กรอกให้ตรงกับที่เขียนในแผน) <span className="text-rose-500">*</span>
+                ผลการดำเนินงาน (กรอกให้ตรงกับผลที่ได้หลังจัดกิจกรรม) <span className="text-rose-500">*</span>
               </label>
               <textarea
                 rows={3}
@@ -765,7 +765,7 @@ function ReportsContent() {
             {/* Problems and Obstacles */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                ปัญหา อุปสรรค และข้อเสนอแนะ (กรอกให้ตรงกับที่เขียนในแผน)
+                ปัญหา อุปสรรค และข้อเสนอแนะ (กรอกให้ตรงกับผลที่ได้หลังจัดกิจกรรม)
               </label>
               <textarea
                 rows={2}
