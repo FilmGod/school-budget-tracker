@@ -71,7 +71,7 @@ export default function DocumentsPage() {
             <span>คลังรวมไฟล์เอกสารงานแผน ปีงบ {currentYear}</span>
           </div>
           <h1 className="text-2xl font-bold text-ink">
-            รวมไฟล์เอกสารงานแผน
+            ดาวน์โหลดแผนกิจกรรมและแบบฟอร์ม
           </h1>
           <p className="text-sm text-muted mt-1">
             เล่มแผนปฏิบัติการประจำปีและคลังเอกสารทางการเงิน
@@ -147,7 +147,7 @@ export default function DocumentsPage() {
             โฟลเดอร์รวบรวมเอกสารและแบบฟอร์มงานแผน
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            คลิกเพื่อเปิดโฟลเดอร์ Google Drive ของแต่ละฝ่ายสำหรับดูและอัปโหลดไฟล์ PDF
+            คลิกเพื่อเปิดโฟลเดอร์ และดาวน์โหลดแผนแต่ละกิจกรรม
           </p>
         </div>
 

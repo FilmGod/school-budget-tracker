@@ -184,7 +184,7 @@ function ProjectsContent() {
             <span>รายละเอียดกิจกรรมและโครงการ ปีงบ {currentYear}</span>
           </div>
           <h1 className="text-2xl font-bold text-ink">
-            โครงการและกิจกรรมตามแผนปฏิบัติการ
+            ตรวจสอบงบประมาณคงเหลือรายกิจกรรม
           </h1>
           <p className="text-sm text-muted mt-1">
             รายการโครงการและกิจกรรมตามแผนปฏิบัติการประจำปี

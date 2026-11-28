@@ -22,9 +22,9 @@ import SettingsModal from '@/components/SettingsModal';
 
 const NAV_LINKS = [
   { href: '/', label: 'ภาพรวม', icon: LayoutDashboard },
-  { href: '/projects', label: 'โครงการและกิจกรรม', icon: FolderKanban },
+  { href: '/projects', label: 'ตรวจสอบงบประมาณคงเหลือรายกิจกรรม', icon: FolderKanban },
   { href: '/reports', label: 'รายงานผลกิจกรรม', icon: FileText },
-  { href: '/documents', label: 'เอกสารงานแผน', icon: FolderDown }
+  { href: '/documents', label: 'ดาวน์โหลดแผนกิจกรรมและแบบฟอร์ม', icon: FolderDown }
 ];
 
 export default function Navbar() {
@@ -147,7 +147,7 @@ export default function Navbar() {
                     }`}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{link.label}</span>
+                    <span className="leading-snug">{link.label}</span>
                   </Link>
                 </li>
               );
