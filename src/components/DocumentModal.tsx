@@ -95,6 +95,7 @@ export default function DocumentModal({ doc, onClose }: DocumentModalProps) {
               {db.departments.map(d => (
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
+              <option value="plan_forms">แบบฟอร์มเอกสารงานแผน</option>
             </select>
           </div>
 
